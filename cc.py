@@ -1899,6 +1899,15 @@ class ConfigurationTool(QMainWindow):
             QSizePolicy.Expanding,
             QSizePolicy.Expanding
         )
+        content_layout = QVBoxLayout(self.content_panel)
+        content_layout.setContentsMargins(24, 24, 24, 24)
+
+        self.log_pages = LogConfigWidget(
+            get_full_config=self._collect_config,
+            show_status=lambda msg: self.statusBar().showMessage(msg, 8000),
+        )
+        self.log_pages.setVisible(False)
+        content_layout.addWidget(self.log_pages)
 
         shadow = QGraphicsDropShadowEffect(
             self
@@ -2188,7 +2197,12 @@ class ConfigurationTool(QMainWindow):
         bus_item.addChild(QTreeWidgetItem(["CAN FD"]))
 
         self.new_tree.addTopLevelItem(bus_item)
-        self.new_tree.addTopLevelItem(QTreeWidgetItem(["Log Configuration"]))
+        log_item = QTreeWidgetItem(["Log Configuration"])
+        log_item.addChild(QTreeWidgetItem(["Filters"]))
+        log_item.addChild(QTreeWidgetItem(["Triggers"]))
+        log_item.addChild(QTreeWidgetItem(["Log Files"]))
+        log_item.addChild(QTreeWidgetItem(["JSON Preview"]))
+        self.new_tree.addTopLevelItem(log_item)
 
         bus_item.setExpanded(False)
         self.new_tree.setVisible(True)

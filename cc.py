@@ -1786,32 +1786,50 @@ class ConfigurationTool(QMainWindow):
             brand_row
         )
         sidebar_layout.addSpacing(14)
+        section_font = QFont()
+        section_font.setFamilies(["Segoe UI Variable Text", "Segoe UI", "Arial"])
+        section_font.setPointSizeF(10.5)
+        section_font.setWeight(QFont.DemiBold)
 
-        # ---- Imported JSON files section (top of sidebar) ----
+        # ================================================================
+        # SECTION 1: Imported Files  (own frame + own layout)
+        # ================================================================
+        self.imported_section = QFrame()
+        self.imported_section.setObjectName("importedSection")
+        self.imported_section.setAttribute(Qt.WA_StyledBackground, True)
+        imported_layout = QVBoxLayout(self.imported_section)
+        imported_layout.setContentsMargins(10, 10, 10, 10)
+        imported_layout.setSpacing(6)
+
         self.imported_label = QLabel("Imported Files")
-        imported_font = QFont()
-        imported_font.setFamilies(["Segoe UI Variable Text", "Segoe UI", "Arial"])
-        imported_font.setPointSizeF(10.5)
-        imported_font.setWeight(QFont.DemiBold)
-        self.imported_label.setFont(imported_font)
-        sidebar_layout.addWidget(self.imported_label)
-        sidebar_layout.addSpacing(6)
+        self.imported_label.setFont(section_font)
+        imported_layout.addWidget(self.imported_label)
 
         self.imported_list = QListWidget()
         self.imported_list.setObjectName("importedList")
         self.imported_list.setUniformItemSizes(True)
         self.imported_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.imported_list.setSpacing(2)
+        self.imported_list.setMaximumHeight(120)   # keep the list compact
         self.imported_list.itemClicked.connect(self.on_imported_file_clicked)
-        sidebar_layout.addWidget(self.imported_list, 1)  # stretch so list can grow
+        imported_layout.addWidget(self.imported_list)
+        sidebar_layout.addWidget(self.imported_section, 0)
 
-        sidebar_layout.addSpacing(16)
+        sidebar_layout.addSpacing(12)
 
-        # ---- Bus / Log configuration tree (below imported files) ----
+        # ================================================================
+        # SECTION 2: Bus / Log Configuration  (own frame + own layout)
+        # ================================================================
+        self.config_section = QFrame()
+        self.config_section.setObjectName("configSection")
+        self.config_section.setAttribute(Qt.WA_StyledBackground, True)
+        config_layout = QVBoxLayout(self.config_section)
+        config_layout.setContentsMargins(10, 10, 10, 10)
+        config_layout.setSpacing(6)
+
         self.config_label = QLabel("Configuration")
-        self.config_label.setFont(imported_font)
-        sidebar_layout.addWidget(self.config_label)
-        sidebar_layout.addSpacing(6)
+        self.config_label.setFont(section_font)
+        config_layout.addWidget(self.config_label)
 
         self.new_tree = QTreeWidget()
         self.new_tree.setHeaderHidden(True)
@@ -1824,13 +1842,16 @@ class ConfigurationTool(QMainWindow):
         self.new_tree.setMouseTracking(True)
         self.new_tree.viewport().setAttribute(Qt.WA_Hover, True)
         self.new_tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.new_tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tree_delegate = ModernTreeDelegate(self.new_tree)
         self.new_tree.setItemDelegate(self.tree_delegate)
         self.new_tree.itemClicked.connect(self.on_tree_item_clicked)
-        sidebar_layout.addWidget(self.new_tree, 1)
+        config_layout.addWidget(self.new_tree, 1)
 
-        # Track imported file paths
+        # stretch 1 = grow and fill remaining space under Imported Files
+        sidebar_layout.addWidget(self.config_section, 1)
         self.imported_files = []
+        
       
 
         root_layout.addWidget(
@@ -2134,7 +2155,7 @@ class ConfigurationTool(QMainWindow):
             return False
 
         try:
-            with open(sys.path, "w", encoding="utf-8") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=4)
             return True
         except OSError as e:
@@ -2155,8 +2176,37 @@ class ConfigurationTool(QMainWindow):
             )
             return False
     # ------------------------------------------------------------------
+    # Imported files list
+    # ------------------------------------------------------------------
+    def _add_imported_file(self, path: str):
+        """Add a JSON file to the sidebar list if not already present."""
+        path = os.path.normpath(os.path.abspath(path))
+        if path in self.imported_files:
+            for i in range(self.imported_list.count()):
+                item = self.imported_list.item(i)
+                if item.data(Qt.UserRole) == path:
+                    self.imported_list.setCurrentItem(item)
+                    break
+            return
+
+        self.imported_files.append(path)
+        item = QListWidgetItem(os.path.basename(path))
+        item.setData(Qt.UserRole, path)
+        item.setToolTip(path)
+        self.imported_list.addItem(item)
+        self.imported_list.setCurrentItem(item)
+
+    def on_imported_file_clicked(self, item: QListWidgetItem):
+        path = item.data(Qt.UserRole)
+        if not path:
+            return
+        if self._read_json(path):
+            self.statusBar().showMessage(f"Loaded: {path}", 3000)
+            self._show_device_tree()
+    # ------------------------------------------------------------------
     # Toolbar actions
     # ------------------------------------------------------------------
+
     def on_new(self):
         self.classic_can_settings = dict(DEFAULT_CLASSIC_CAN)
         self.classic_can_enabled = False
@@ -2166,6 +2216,7 @@ class ConfigurationTool(QMainWindow):
         self.statusBar().showMessage("New configuration", 3000)
         self.canfd_settings = dict(DEFAULT_CANFD)
         self.log_pages.apply(default_log_config())
+        self.imported_list.clearSelection()
 
     def on_open(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -2215,6 +2266,8 @@ class ConfigurationTool(QMainWindow):
             return
 
         if self._read_json(path):
+            self._add_imported_file(path)
+            self._show_device_tree()
             self.statusBar().showMessage(f"Imported: {path}", 3000)
 
     def on_export(self):
@@ -2299,6 +2352,27 @@ class ConfigurationTool(QMainWindow):
             f"color: {c['text_primary']};"
         )
 
+        # Section titles — primary + bold (only once)
+        self.imported_label.setStyleSheet(
+            f"color: {c['text_primary']}; font-weight: 600;"
+        )
+        self.config_label.setStyleSheet(
+            f"color: {c['text_primary']}; font-weight: 600;"
+        )
+
+        # Visible section boxes (only once)
+        section_style = f"""
+            background-color: {c['bg_main']};
+            border: 2px solid {c['border']};
+            border-radius: {RADIUS_LG}px;
+        """
+        self.imported_section.setStyleSheet(
+            f"#importedSection {{ {section_style} }}"
+        )
+        self.config_section.setStyleSheet(
+            f"#configSection {{ {section_style} }}"
+        )
+
         self.centralWidget().layout().itemAt(
             1
         ).widget().setStyleSheet(
@@ -2344,10 +2418,34 @@ class ConfigurationTool(QMainWindow):
             """
         )
 
+        # Imported list — transparent inside its section (only once)
+        self.imported_list.setStyleSheet(
+            f"""
+            QListWidget {{
+                background-color: transparent;
+                border: none;
+                outline: 0;
+                padding: 2px;
+            }}
+            QListWidget::item {{
+                color: {c['text_primary']};
+                border-radius: {RADIUS_SM}px;
+                padding: 6px 8px;
+            }}
+            QListWidget::item:hover {{
+                background-color: {c['border']};
+            }}
+            QListWidget::item:selected {{
+                background-color: {c['accent_blue']};
+                color: #FFFFFF;
+            }}
+            """
+        )
+
         self.new_tree.setStyleSheet(
             f"""
             QTreeWidget {{
-                background-color: {c['bg_panel']};
+                background-color: transparent;
                 border: none;
                 outline: 0;
             }}
@@ -2358,7 +2456,6 @@ class ConfigurationTool(QMainWindow):
 
         self._refresh_toolbar_theme(c)
         self.log_pages.set_theme(c)
-
 
 def main():
 

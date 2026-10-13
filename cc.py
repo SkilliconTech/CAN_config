@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QToolBar, QToolButton, QFileDialog, QMessageBox,
     QStyledItemDelegate, QStyle,QFormLayout, QLineEdit, QCheckBox, QSpinBox, QTableWidget,
     QTableWidgetItem, QAbstractItemView, QHeaderView, QDialogButtonBox,
-    QPlainTextEdit, QStackedWidget,
+    QPlainTextEdit, QStackedWidget,QListWidget,QListWidgetItem
 )
 DEFAULT_CANFD = {
     "arbitration_bitrate": "500 kbits/s",
@@ -1787,14 +1787,39 @@ class ConfigurationTool(QMainWindow):
         )
         sidebar_layout.addSpacing(14)
 
-        # Tree shown after clicking New
+        # ---- Imported JSON files section (top of sidebar) ----
+        self.imported_label = QLabel("Imported Files")
+        imported_font = QFont()
+        imported_font.setFamilies(["Segoe UI Variable Text", "Segoe UI", "Arial"])
+        imported_font.setPointSizeF(10.5)
+        imported_font.setWeight(QFont.DemiBold)
+        self.imported_label.setFont(imported_font)
+        sidebar_layout.addWidget(self.imported_label)
+        sidebar_layout.addSpacing(6)
+
+        self.imported_list = QListWidget()
+        self.imported_list.setObjectName("importedList")
+        self.imported_list.setUniformItemSizes(True)
+        self.imported_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.imported_list.setSpacing(2)
+        self.imported_list.itemClicked.connect(self.on_imported_file_clicked)
+        sidebar_layout.addWidget(self.imported_list, 1)  # stretch so list can grow
+
+        sidebar_layout.addSpacing(16)
+
+        # ---- Bus / Log configuration tree (below imported files) ----
+        self.config_label = QLabel("Configuration")
+        self.config_label.setFont(imported_font)
+        sidebar_layout.addWidget(self.config_label)
+        sidebar_layout.addSpacing(6)
+
         self.new_tree = QTreeWidget()
         self.new_tree.setHeaderHidden(True)
-        self.new_tree.setVisible(False)
-        self.new_tree.setRootIsDecorated(False)      # we draw our own chevrons
+        self.new_tree.setVisible(True)
+        self.new_tree.setRootIsDecorated(False)
         self.new_tree.setIndentation(16)
         self.new_tree.setAnimated(True)
-        self.new_tree.setExpandsOnDoubleClick(False)  # single click toggles
+        self.new_tree.setExpandsOnDoubleClick(False)
         self.new_tree.setUniformRowHeights(True)
         self.new_tree.setMouseTracking(True)
         self.new_tree.viewport().setAttribute(Qt.WA_Hover, True)
@@ -1802,9 +1827,11 @@ class ConfigurationTool(QMainWindow):
         self.tree_delegate = ModernTreeDelegate(self.new_tree)
         self.new_tree.setItemDelegate(self.tree_delegate)
         self.new_tree.itemClicked.connect(self.on_tree_item_clicked)
-        sidebar_layout.addWidget(self.new_tree)
+        sidebar_layout.addWidget(self.new_tree, 1)
 
-        sidebar_layout.addStretch(1)
+        # Track imported file paths
+        self.imported_files = []
+      
 
         root_layout.addWidget(
             self.sidebar

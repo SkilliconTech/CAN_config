@@ -2298,8 +2298,11 @@ class ConfigurationTool(QMainWindow):
         log_item.addChild(QTreeWidgetItem(["Filters"]))
         log_item.addChild(QTreeWidgetItem(["Triggers"]))
         log_item.addChild(QTreeWidgetItem(["Log Files"]))
-        log_item.addChild(QTreeWidgetItem(["JSON Preview"]))
         self.new_tree.addTopLevelItem(log_item)
+
+        # JSON Preview as its own top-level item
+        preview_item = QTreeWidgetItem(["JSON Preview"])
+        self.new_tree.addTopLevelItem(preview_item)
 
         bus_item.setExpanded(False)
         self.new_tree.setVisible(True)

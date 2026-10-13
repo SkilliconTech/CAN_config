@@ -2,7 +2,6 @@ import sys
 import os
 import copy
 import json
-from turtle import title
 
 from PySide6.QtCore import Qt, QSize, QRectF, QPointF, QByteArray
 from PySide6.QtGui import (
@@ -425,11 +424,13 @@ def make_theme_icon(dark_mode: bool, color: str, size: int = 18) -> QIcon:
 # ------------------------------------------------------------------
 # Classic CAN settings window
 # ------------------------------------------------------------------
-class ClassicCANSettingsPage(QWidget):
+class ClassicCANSettingsDialog(QDialog):
     def __init__(self, parent=None):
-        super().__init__()
-        self.parent_window = parent
+        super().__init__(parent)
 
+        self.parent_window = parent
+        self.setWindowTitle("CAN Channel 1 settings")
+        self.resize(760, 560)
 
         # Keep the current Classic CAN configuration so that changes
         # made in the dialog are reflected in Current settings and
@@ -578,6 +579,20 @@ class ClassicCANSettingsPage(QWidget):
 
         main_layout.addStretch(1)
 
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch(1)
+
+        ok_button = QPushButton("OK")
+        cancel_button = QPushButton("Cancel")
+
+        ok_button.clicked.connect(self.accept_settings)
+        cancel_button.clicked.connect(self.reject)
+
+        button_layout.addWidget(ok_button)
+        button_layout.addWidget(cancel_button)
+
+        main_layout.addLayout(button_layout)
 
         # Functional connections
         self.bitrate_combo.currentTextChanged.connect(
@@ -600,12 +615,6 @@ class ClassicCANSettingsPage(QWidget):
         # Restore the previously stored values.
         self._restore_settings()
         self.update_current_settings()
-        self._restore_settings()
-        self.update_current_settings()
-
-        self.bitrate_combo.currentTextChanged.connect(self.save_settings)
-        self.sjw_combo.currentTextChanged.connect(self.save_settings)
-        self.enable_radio.toggled.connect(self.save_settings)
 
     def _restore_settings(self):
         target = (
@@ -678,24 +687,29 @@ class ClassicCANSettingsPage(QWidget):
                 settings
             )
 
-    def save_settings(self, *args):
+    def accept_settings(self):
         settings = self._collect_settings()
 
         if self.parent_window is not None:
             self.parent_window.classic_can_settings = dict(settings)
             self.parent_window.classic_can_enabled = settings["enabled"]
 
+        self.accept()
+
 
 # ------------------------------------------------------------------
 # CAN FD settings window
 # ------------------------------------------------------------------
-class CANFDSettingsPage(QWidget):
+class CANFDSettingsDialog(QDialog):
     def __init__(self, parent=None):
-        super().__init__()
         self.parent_window = parent
         self.settings = dict(
             getattr(parent, "canfd_settings", DEFAULT_CANFD)
         )
+        super().__init__(parent)
+
+        self.setWindowTitle("CAN Channel 1 settings")
+        self.resize(900, 700)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(12, 12, 12, 12)
@@ -861,6 +875,20 @@ class CANFDSettingsPage(QWidget):
 
         main_layout.addStretch(1)
 
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch(1)
+
+        ok_button = QPushButton("OK")
+        cancel_button = QPushButton("Cancel")
+
+        ok_button.clicked.connect(self.accept_settings)
+        cancel_button.clicked.connect(self.reject)
+
+        button_layout.addWidget(ok_button)
+        button_layout.addWidget(cancel_button)
+
+        main_layout.addLayout(button_layout)
         self._restore_settings()
 
     @staticmethod
@@ -943,9 +971,11 @@ class CANFDSettingsPage(QWidget):
             "enabled": self.enable_radio.isChecked(),
         }
 
-    def save_settings(self, *args):
+    def accept_settings(self):
         if self.parent_window is not None:
             self.parent_window.canfd_settings = self._collect_settings()
+
+        self.accept()
 
 # ------------------------------------------------------------------
 # Modern tree look (rounded rows, chevrons, accent selection)
@@ -1879,12 +1909,6 @@ class ConfigurationTool(QMainWindow):
         )
         self.log_pages.setVisible(False)
         content_layout.addWidget(self.log_pages)
-        self.can_host = QWidget()
-        self.can_host_layout = QVBoxLayout(self.can_host)
-        self.can_host_layout.setContentsMargins(0, 0, 0, 0)
-        self.can_host.setVisible(False)
-        self._can_page_info = None
-        content_layout.addWidget(self.can_host)
 
         shadow = QGraphicsDropShadowEffect(
             self
@@ -2072,7 +2096,6 @@ class ConfigurationTool(QMainWindow):
             canfd.update(data["canfd"])
         self.canfd_settings = canfd
         self.log_pages.apply(log_data)
-        self._reload_can_page()
 
     def _write_json(self, path: str) -> bool:
         data = self._collect_config()
@@ -2116,7 +2139,6 @@ class ConfigurationTool(QMainWindow):
         self.statusBar().showMessage("New configuration", 3000)
         self.canfd_settings = dict(DEFAULT_CANFD)
         self.log_pages.apply(default_log_config())
-        self._reload_can_page()
 
     def on_open(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -2202,23 +2224,6 @@ class ConfigurationTool(QMainWindow):
         bus_item.setExpanded(False)
         self.new_tree.setVisible(True)
 
-    def _show_can_page(self, page_class, title):
-        while self.can_host_layout.count():
-            item = self.can_host_layout.takeAt(0)
-            if item.widget() is not None:
-                item.widget().deleteLater()
-
-        self._can_page_info = (page_class, title)
-        self.can_host_layout.addWidget(page_class(self))
-        self.title_label.setText(title)
-        self.log_pages.setVisible(False)
-        self.can_host.setVisible(True)
-
-    def _reload_can_page(self):
-        if self._can_page_info and self.can_host.isVisible():
-            self._show_can_page(*self._can_page_info)
-    
-
     def on_tree_item_clicked(self, item, column):
         if item.childCount() > 0:
             item.setExpanded(not item.isExpanded())
@@ -2229,12 +2234,13 @@ class ConfigurationTool(QMainWindow):
             self.log_pages.show_page(page)
             self.log_pages.setVisible(True)
             return
-        
+
         if item.text(0) == "Classic CAN":
-            self._show_can_page(ClassicCANSettingsPage, "Classic CAN")
+            dialog = ClassicCANSettingsDialog(self)
+            dialog.exec()
         elif item.text(0) == "CAN FD":
-            self._show_can_page(CANFDSettingsPage, "CAN FD")
-        
+            dialog = CANFDSettingsDialog(self)
+            dialog.exec()
 
     # ------------------------------------------------------------------
     # Theme
@@ -2325,26 +2331,6 @@ class ConfigurationTool(QMainWindow):
 
         self._refresh_toolbar_theme(c)
         self.log_pages.set_theme(c)
-        self.can_host.setStyleSheet(
-            self.log_pages.styleSheet() + f"""
-            QGroupBox {{
-                color: {c['text_primary']};
-                border: 1px solid {c['border']};
-                border-radius: {RADIUS_SM}px;
-                margin-top: 10px;
-                padding-top: 12px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 4px;
-            }}
-            QRadioButton {{
-                color: {c['text_primary']};
-                background: transparent;
-            }}
-            """
-        )
 
 
 def main():

@@ -1,6 +1,8 @@
 import sys
 import os
+import copy
 import json
+from turtle import title
 
 from PySide6.QtCore import Qt, QSize, QRectF, QPointF, QByteArray
 from PySide6.QtGui import (
@@ -423,13 +425,11 @@ def make_theme_icon(dark_mode: bool, color: str, size: int = 18) -> QIcon:
 # ------------------------------------------------------------------
 # Classic CAN settings window
 # ------------------------------------------------------------------
-class ClassicCANSettingsDialog(QDialog):
+class ClassicCANSettingsPage(QWidget):
     def __init__(self, parent=None):
-        super().__init__(parent)
-
+        super().__init__()
         self.parent_window = parent
-        self.setWindowTitle("CAN Channel 1 settings")
-        self.resize(760, 560)
+
 
         # Keep the current Classic CAN configuration so that changes
         # made in the dialog are reflected in Current settings and
@@ -578,20 +578,6 @@ class ClassicCANSettingsDialog(QDialog):
 
         main_layout.addStretch(1)
 
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-
-        ok_button.clicked.connect(self.accept_settings)
-        cancel_button.clicked.connect(self.reject)
-
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-
-        main_layout.addLayout(button_layout)
 
         # Functional connections
         self.bitrate_combo.currentTextChanged.connect(
@@ -614,6 +600,12 @@ class ClassicCANSettingsDialog(QDialog):
         # Restore the previously stored values.
         self._restore_settings()
         self.update_current_settings()
+        self._restore_settings()
+        self.update_current_settings()
+
+        self.bitrate_combo.currentTextChanged.connect(self.save_settings)
+        self.sjw_combo.currentTextChanged.connect(self.save_settings)
+        self.enable_radio.toggled.connect(self.save_settings)
 
     def _restore_settings(self):
         target = (
@@ -686,29 +678,24 @@ class ClassicCANSettingsDialog(QDialog):
                 settings
             )
 
-    def accept_settings(self):
+    def save_settings(self, *args):
         settings = self._collect_settings()
 
         if self.parent_window is not None:
             self.parent_window.classic_can_settings = dict(settings)
             self.parent_window.classic_can_enabled = settings["enabled"]
 
-        self.accept()
-
 
 # ------------------------------------------------------------------
 # CAN FD settings window
 # ------------------------------------------------------------------
-class CANFDSettingsDialog(QDialog):
+class CANFDSettingsPage(QWidget):
     def __init__(self, parent=None):
+        super().__init__()
         self.parent_window = parent
         self.settings = dict(
             getattr(parent, "canfd_settings", DEFAULT_CANFD)
         )
-        super().__init__(parent)
-
-        self.setWindowTitle("CAN Channel 1 settings")
-        self.resize(900, 700)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(12, 12, 12, 12)
@@ -874,20 +861,6 @@ class CANFDSettingsDialog(QDialog):
 
         main_layout.addStretch(1)
 
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-
-        ok_button.clicked.connect(self.accept_settings)
-        cancel_button.clicked.connect(self.reject)
-
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-
-        main_layout.addLayout(button_layout)
         self._restore_settings()
 
     @staticmethod
@@ -970,11 +943,9 @@ class CANFDSettingsDialog(QDialog):
             "enabled": self.enable_radio.isChecked(),
         }
 
-    def accept_settings(self):
+    def save_settings(self, *args):
         if self.parent_window is not None:
             self.parent_window.canfd_settings = self._collect_settings()
-
-        self.accept()
 
 # ------------------------------------------------------------------
 # Modern tree look (rounded rows, chevrons, accent selection)
@@ -1908,6 +1879,12 @@ class ConfigurationTool(QMainWindow):
         )
         self.log_pages.setVisible(False)
         content_layout.addWidget(self.log_pages)
+        self.can_host = QWidget()
+        self.can_host_layout = QVBoxLayout(self.can_host)
+        self.can_host_layout.setContentsMargins(0, 0, 0, 0)
+        self.can_host.setVisible(False)
+        self._can_page_info = None
+        content_layout.addWidget(self.can_host)
 
         shadow = QGraphicsDropShadowEffect(
             self
@@ -2066,17 +2043,24 @@ class ConfigurationTool(QMainWindow):
     # Configuration data (used by Save / Open / Import / Export)
     # ------------------------------------------------------------------
     def _collect_config(self) -> dict:
-         return {
+        data = {
             "app": "CAN Configuration Tool",
             "version": 1,
             "classic_can": dict(self.classic_can_settings),
             "canfd": dict(self.canfd_settings),
-         }
+        }
+        data.update(self.log_pages.collect())   # filters, triggers, logging
+        return data
     def _apply_config(self, data):
         if not isinstance(data, dict) or not isinstance(
             data.get("classic_can"), dict
         ):
             raise ValueError("This is not a valid configuration file.")
+        log_data = default_log_config()
+        for key in ("filters", "triggers", "logging"):
+            if key in data:
+                log_data[key] = data[key]
+        validate_log_config(log_data)
 
         settings = dict(DEFAULT_CLASSIC_CAN)
         settings.update(data["classic_can"])
@@ -2087,11 +2071,21 @@ class ConfigurationTool(QMainWindow):
         if isinstance(data.get("canfd"), dict):
             canfd.update(data["canfd"])
         self.canfd_settings = canfd
+        self.log_pages.apply(log_data)
+        self._reload_can_page()
 
     def _write_json(self, path: str) -> bool:
+        data = self._collect_config()
+
         try:
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(self._collect_config(), f, indent=4)
+            validate_log_config({k: data[k] for k in ("filters", "triggers", "logging")})
+        except ValueError as e:
+            QMessageBox.warning(self, "Invalid configuration", str(e))
+            return False
+
+        try:
+            with open(sys.path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
             return True
         except OSError as e:
             QMessageBox.critical(
@@ -2105,12 +2099,11 @@ class ConfigurationTool(QMainWindow):
                 data = json.load(f)
             self._apply_config(data)
             return True
-        except (OSError, json.JSONDecodeError, ValueError) as e:
+        except (OSError, json.JSONDecodeError, ValueError, KeyError, TypeError) as e:
             QMessageBox.critical(
                 self, "Load error", f"Could not load file:\n{e}"
             )
             return False
-
     # ------------------------------------------------------------------
     # Toolbar actions
     # ------------------------------------------------------------------
@@ -2122,6 +2115,8 @@ class ConfigurationTool(QMainWindow):
         self._show_device_tree()
         self.statusBar().showMessage("New configuration", 3000)
         self.canfd_settings = dict(DEFAULT_CANFD)
+        self.log_pages.apply(default_log_config())
+        self._reload_can_page()
 
     def on_open(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -2207,17 +2202,39 @@ class ConfigurationTool(QMainWindow):
         bus_item.setExpanded(False)
         self.new_tree.setVisible(True)
 
+    def _show_can_page(self, page_class, title):
+        while self.can_host_layout.count():
+            item = self.can_host_layout.takeAt(0)
+            if item.widget() is not None:
+                item.widget().deleteLater()
+
+        self._can_page_info = (page_class, title)
+        self.can_host_layout.addWidget(page_class(self))
+        self.title_label.setText(title)
+        self.log_pages.setVisible(False)
+        self.can_host.setVisible(True)
+
+    def _reload_can_page(self):
+        if self._can_page_info and self.can_host.isVisible():
+            self._show_can_page(*self._can_page_info)
+    
+
     def on_tree_item_clicked(self, item, column):
         if item.childCount() > 0:
             item.setExpanded(not item.isExpanded())
             return
-
+        page = LOG_PAGES.get(item.text(0))
+        if page:
+            self.title_label.setText(item.text(0))   # big title shows the page name
+            self.log_pages.show_page(page)
+            self.log_pages.setVisible(True)
+            return
+        
         if item.text(0) == "Classic CAN":
-            dialog = ClassicCANSettingsDialog(self)
-            dialog.exec()
+            self._show_can_page(ClassicCANSettingsPage, "Classic CAN")
         elif item.text(0) == "CAN FD":
-            dialog = CANFDSettingsDialog(self)
-            dialog.exec()
+            self._show_can_page(CANFDSettingsPage, "CAN FD")
+        
 
     # ------------------------------------------------------------------
     # Theme
@@ -2307,6 +2324,27 @@ class ConfigurationTool(QMainWindow):
         self.new_tree.viewport().update()
 
         self._refresh_toolbar_theme(c)
+        self.log_pages.set_theme(c)
+        self.can_host.setStyleSheet(
+            self.log_pages.styleSheet() + f"""
+            QGroupBox {{
+                color: {c['text_primary']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+                margin-top: 10px;
+                padding-top: 12px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 4px;
+            }}
+            QRadioButton {{
+                color: {c['text_primary']};
+                background: transparent;
+            }}
+            """
+        )
 
 
 def main():

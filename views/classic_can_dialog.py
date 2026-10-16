@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QDialog,
+    QWidget,
     QVBoxLayout,
     QHBoxLayout,
     QGroupBox,
@@ -7,41 +7,45 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QComboBox,
     QPushButton,
-    QMessageBox
+    QScrollArea,
+    QFrame,
 )
 
-class ClassicCANSettingsDialog(QDialog):
+from models.constants import DEFAULT_CLASSIC_CAN
+
+
+class ClassicCANSettingsDialog(QWidget):
+    """Classic CAN settings shown in the right content panel (not a popup)."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.parent_window = parent
-        self.setWindowTitle("CAN Channel 1 settings")
-        self.resize(760, 560)
 
-        # Keep the current Classic CAN configuration so that changes
-        # made in the dialog are reflected in Current settings and
-        # are available again when the dialog is opened.
-        default_settings = {
-            "bitrate": "50.000 kbits/s",
-            "sampling_point": "75%",
-            "sjw": "1",
-            "enabled": False,
-        }
+        default_settings = dict(DEFAULT_CLASSIC_CAN)
 
         if parent is not None:
             self.settings = dict(
-                getattr(
-                    parent,
-                    "classic_can_settings",
-                    default_settings
-                )
+                getattr(parent, "classic_can_settings", default_settings)
             )
         else:
             self.settings = dict(default_settings)
 
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(12, 12, 12, 12)
-        main_layout.setSpacing(14)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        outer.addWidget(scroll)
+
+        body = QWidget()
+        scroll.setWidget(body)
+
+        main_layout = QVBoxLayout(body)
+        main_layout.setContentsMargins(4, 4, 4, 4)
+        main_layout.setSpacing(12)
 
         # Bus parameter selection
         bus_mode_layout = QHBoxLayout()
@@ -165,27 +169,15 @@ class ClassicCANSettingsDialog(QDialog):
 
         main_layout.addStretch(1)
 
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-
-        ok_button.clicked.connect(self.accept_settings)
-        cancel_button.clicked.connect(self.reject)
-
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-
-        main_layout.addLayout(button_layout)
-
         # Functional connections
         self.bitrate_combo.currentTextChanged.connect(
-            self.update_current_settings
+            self._on_settings_changed
         )
         self.sjw_combo.currentTextChanged.connect(
-            self.update_current_settings
+            self._on_settings_changed
+        )
+        self.enable_radio.toggled.connect(
+            self._on_settings_changed
         )
 
         apply_all_button.clicked.connect(
@@ -273,15 +265,27 @@ class ClassicCANSettingsDialog(QDialog):
                 settings
             )
 
-    def accept_settings(self):
-        settings = self._collect_settings()
+    def _on_settings_changed(self, *_args):
+        self.update_current_settings()
+        self.apply_to_parent()
 
+    def apply_to_parent(self):
+        settings = self._collect_settings()
         if self.parent_window is not None:
             self.parent_window.classic_can_settings = dict(settings)
             self.parent_window.classic_can_enabled = settings["enabled"]
 
-        self.accept()
-        print(
-          "Model Classic CAN:",
-           self.parent_window.controller.get_classic_can()
+    def load_from_parent(self):
+        if self.parent_window is None:
+            return
+        self.settings = dict(
+            getattr(self.parent_window, "classic_can_settings", DEFAULT_CLASSIC_CAN)
         )
+        self._restore_settings()
+        if self.settings.get("enabled", False):
+            self.enable_radio.setChecked(True)
+        else:
+            self.disable_radio.setChecked(True)
+        self.update_current_settings()
+
+    

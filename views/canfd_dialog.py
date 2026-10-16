@@ -1,30 +1,37 @@
 from PySide6.QtWidgets import (
-    QDialog,
+    QWidget,
     QVBoxLayout,
     QHBoxLayout,
     QLabel,
     QGroupBox,
     QComboBox,
     QRadioButton,
-    QPushButton
+    QPushButton,
+    QScrollArea,
+    QFrame,
 )
 from models.constants import DEFAULT_CANFD
-class CANFDSettingsDialog(QDialog):
+
+
+class CANFDSettingsDialog(QWidget):
+    """CAN FD settings shown in the right content panel (not a popup)."""
+
     def __init__(self, parent=None):
         self.parent_window = parent
         self.settings = dict(
             getattr(parent, "canfd_settings", DEFAULT_CANFD)
+            if parent is not None
+            else DEFAULT_CANFD
         )
         super().__init__(parent)
 
-        self.setWindowTitle("CAN Channel 1 settings")
-        self.resize(900, 700)
-
+        # No scroll — compact layout fits the right panel
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(12, 12, 12, 12)
-        main_layout.setSpacing(14)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(8)
 
         # Arbitration phase parameters
+
         arbitration_group = QGroupBox("Arbitration phase parameters")
         arbitration_layout = QVBoxLayout(arbitration_group)
         arbitration_layout.setSpacing(10)
@@ -121,16 +128,7 @@ class CANFDSettingsDialog(QDialog):
 
         main_layout.addWidget(current_group)
 
-        # Update the labels whenever any of the four dropdowns changes
-        for combo in (
-            self.arbitration_bitrate_combo,
-            self.arbitration_sjw_combo,
-            self.data_bitrate_combo,
-            self.data_sjw_combo,
-        ):
-            combo.currentTextChanged.connect(self.update_current_settings)
-
-        self.update_current_settings()
+        
         # Options and Store settings
         bottom_layout = QHBoxLayout()
         bottom_layout.setSpacing(20)
@@ -183,21 +181,17 @@ class CANFDSettingsDialog(QDialog):
         main_layout.addLayout(bottom_layout)
 
         main_layout.addStretch(1)
+        
+        # Live apply — MUST be after enable_radio is created
+        self.enable_radio.toggled.connect(self._on_settings_changed)
+        for combo in (
+            self.arbitration_bitrate_combo,
+            self.arbitration_sjw_combo,
+            self.data_bitrate_combo,
+            self.data_sjw_combo,
+        ):
+            combo.currentTextChanged.connect(self._on_settings_changed)
 
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-
-        ok_button.clicked.connect(self.accept_settings)
-        cancel_button.clicked.connect(self.reject)
-
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-
-        main_layout.addLayout(button_layout)
         self._restore_settings()
 
     @staticmethod
@@ -281,12 +275,19 @@ class CANFDSettingsDialog(QDialog):
         }
 
     
-    def accept_settings(self):
+    def _on_settings_changed(self, *_args):
+        self.update_current_settings()
+        self.apply_to_parent()
 
+    def apply_to_parent(self):
         if self.parent_window is not None:
-            self.parent_window.canfd_settings = (
-                self._collect_settings()
-            )
+            self.parent_window.canfd_settings = self._collect_settings()
 
-        self.accept()
+    def load_from_parent(self):
+        if self.parent_window is None:
+            return
+        self.settings = dict(
+            getattr(self.parent_window, "canfd_settings", DEFAULT_CANFD)
+        )
+        self._restore_settings()
 

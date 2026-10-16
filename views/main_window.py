@@ -30,7 +30,9 @@ from PySide6.QtWidgets import (
     QMenu,
     QMenuBar,
     QGraphicsDropShadowEffect,
+    QStackedWidget,
     QSizePolicy
+    
 )
 
 from models.constants import (
@@ -351,8 +353,12 @@ class ConfigurationTool(QMainWindow):
             QSizePolicy.Expanding,
             QSizePolicy.Expanding
         )
+       
         content_layout = QVBoxLayout(self.content_panel)
-        content_layout.setContentsMargins(24, 24, 24, 24)
+        content_layout.setContentsMargins(16, 16, 16, 16)
+
+        self.content_stack = QStackedWidget()
+        self.content_stack.setVisible(False)
 
         self.log_pages = LogConfigWidget(
             get_full_config=self._collect_config,
@@ -361,9 +367,15 @@ class ConfigurationTool(QMainWindow):
         self.log_pages.configuration_changed.connect(
            self.sync_logging_to_model
         )
-        self.log_pages.setVisible(False)
-        content_layout.addWidget(self.log_pages)
 
+        self.classic_can_page = ClassicCANSettingsDialog(self)
+        self.canfd_page = CANFDSettingsDialog(self)
+
+        self.content_stack.addWidget(self.log_pages)         # 0
+        self.content_stack.addWidget(self.classic_can_page)  # 1
+        self.content_stack.addWidget(self.canfd_page)        # 2
+
+        content_layout.addWidget(self.content_stack)
         shadow = QGraphicsDropShadowEffect(
             self
         )
@@ -800,27 +812,35 @@ class ConfigurationTool(QMainWindow):
     
     
     def on_tree_item_clicked(self, item, column):
-     print("Clicked:", item.text(0))
-     if item.childCount() > 0:
-        item.setExpanded(not item.isExpanded())
-        return
+        if item.childCount() > 0:
+            item.setExpanded(not item.isExpanded())
+            return
 
-     page = LOG_PAGES.get(item.text(0))
+        name = item.text(0)
 
-     if page:
-        self.title_label.setText(item.text(0))
-        self.log_pages.show_page(page)
-        self.log_pages.setVisible(True)
-        return
+        page = LOG_PAGES.get(name)
+        if page:
+            self.title_label.setText(name)
+            self.content_stack.setVisible(True)
+            self.content_stack.setCurrentWidget(self.log_pages)
+            self.log_pages.show_page(page)
+            return
 
-     if item.text(0) == "Classic CAN":
-        dialog = ClassicCANSettingsDialog(self)
-        dialog.exec()
+        if name == "Classic CAN":
+            self.title_label.setText("Classic CAN")
+            self.classic_can_page.load_from_parent()
+            self.content_stack.setVisible(True)
+            self.content_stack.setCurrentWidget(self.classic_can_page)
+            return
 
-     elif item.text(0) == "CAN FD":
-        dialog = CANFDSettingsDialog(self)
-        dialog.exec()
+        if name == "CAN FD":
+            self.title_label.setText("CAN FD")
+            self.canfd_page.load_from_parent()
+            self.content_stack.setVisible(True)
+            self.content_stack.setCurrentWidget(self.canfd_page)
+            return
 
+  
     # ------------------------------------------------------------------
     # Theme
     # ------------------------------------------------------------------

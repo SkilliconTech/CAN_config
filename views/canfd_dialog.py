@@ -309,9 +309,12 @@ class CANFDSettingsDialog(QWidget):
             )
 
     def on_save(self):
+        """Save this window's settings into the model only (not the config file)."""
         self.apply_to_parent()
         if self.parent_window is not None:
-            self.parent_window.on_save()
+            self.parent_window.statusBar().showMessage(
+                "CAN FD settings saved", 3000
+            )
 
     def on_cancel(self):
         self.load_from_parent()

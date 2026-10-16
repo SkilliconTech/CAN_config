@@ -975,3 +975,5 @@ class ConfigurationTool(QMainWindow):
 
         self._refresh_toolbar_theme(c)
         self.log_pages.set_theme(c)
+        self.classic_can_page.set_theme(c)
+        self.canfd_page.set_theme(c)

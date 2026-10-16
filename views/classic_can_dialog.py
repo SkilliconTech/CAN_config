@@ -6,9 +6,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QRadioButton,
     QComboBox,
-    QPushButton,
-    QScrollArea,
-    QFrame,
+    QPushButton
 )
 
 from models.constants import DEFAULT_CLASSIC_CAN

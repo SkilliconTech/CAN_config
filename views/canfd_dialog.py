@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QPushButton
 )
+from PySide6.QtCore import Qt
 from models.constants import DEFAULT_CANFD
 
 

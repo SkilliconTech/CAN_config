@@ -284,10 +284,12 @@ class ClassicCANSettingsDialog(QWidget):
             )
 
     def on_save(self):
-        """Save: apply to model, then save configuration file."""
+        """Save this window's settings into the model only (not the config file)."""
         self.apply_to_parent()
         if self.parent_window is not None:
-            self.parent_window.on_save()
+            self.parent_window.statusBar().showMessage(
+                "Classic CAN settings saved", 3000
+            )
 
     def on_cancel(self):
         """Cancel: discard form edits and reload last applied settings."""

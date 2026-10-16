@@ -279,13 +279,13 @@ class ConfigurationTool(QMainWindow):
         )
 
         main_layout.setContentsMargins(
-            32,
-            28,
-            32,
-            28
+            24,
+            12,
+            24,
+            12
         )
 
-        main_layout.setSpacing(24)
+        main_layout.setSpacing(10)
 
         topbar = QHBoxLayout()
 
@@ -355,7 +355,7 @@ class ConfigurationTool(QMainWindow):
         )
        
         content_layout = QVBoxLayout(self.content_panel)
-        content_layout.setContentsMargins(16, 16, 16, 16)
+        content_layout.setContentsMargins(12, 10, 12, 10)
 
         self.content_stack = QStackedWidget()
         self.content_stack.setVisible(False)

@@ -330,16 +330,48 @@ class LogConfigWidget(QStackedWidget):
             self.edit_rule(self.table.currentRow())
 
     def remove_filter(self):
-        if self.table.currentRow() >= 0:
-            del self.rules[self.table.currentRow()]
-            self.refresh_table()
+        row = self.table.currentRow()
+
+        if row < 0:
+            return
+
+        name = self.rules[row]["filter_id"]
+
+        answer = QMessageBox.question(
+            self.window(),
+            "Remove filter",
+            f"Do you want to remove the filter '{name}'?\n\n"
+            "This cannot be undone.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+
+        if answer != QMessageBox.Yes:
+            return
+
+        del self.rules[row]
+        self.refresh_table()
+        self.notify_configuration_changed()
 
     def remove_all(self):
-        if self.rules and QMessageBox.question(
-                self.window(), "Remove filters", "Remove all filters?"
-        ) == QMessageBox.Yes:
-            self.rules.clear()
-            self.refresh_table()
+        if not self.rules:
+            return
+
+        answer = QMessageBox.warning(
+            self.window(),
+            "Remove all filters",
+            f"Do you want to remove all {len(self.rules)} filter(s)?\n\n"
+            "This cannot be undone.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+
+        if answer != QMessageBox.Yes:
+            return
+
+        self.rules.clear()
+        self.refresh_table()
+        self.notify_configuration_changed()
 
     # ---------------- JSON preview ----------------
     def refresh_preview(self):

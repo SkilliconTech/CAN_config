@@ -31,8 +31,21 @@ class ClassicCANSettingsDialog(QWidget):
         else:
             self.settings = dict(default_settings)
 
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        outer.addWidget(scroll)
+
+        body = QWidget()
+        scroll.setWidget(body)
+
+        main_layout = QVBoxLayout(body)
+        main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(8)
 
         # Bus parameter selection

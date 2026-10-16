@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QComboBox,
     QRadioButton,
+    QScrollArea,
+    QFrame,
     QPushButton
 )
 from PySide6.QtCore import Qt
@@ -24,9 +26,22 @@ class CANFDSettingsDialog(QWidget):
         )
         super().__init__(parent)
 
-        # No scroll — compact layout fits the right panel
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+       
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        outer.addWidget(scroll)
+
+        body = QWidget()
+        scroll.setWidget(body)
+
+        main_layout = QVBoxLayout(body)
+        main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(8)
 
         # Arbitration phase parameters

@@ -342,61 +342,42 @@ class ClassicCANSettingsDialog(QWidget):
                 border: 2px solid {c['border']};
                 background-color: {c['bg_main']};
             }}
+            QRadioButton {{
+                color: {c['text_primary']};
+                background: transparent;
+                spacing: 10px;
+                padding: 4px 0;
+            }}
+            QRadioButton::indicator {{
+                width: 18px;
+                height: 18px;
+                border-radius: 10px;
+                border: 2px solid {c['border']};
+                background-color: {c['bg_main']};
+            }}
             QRadioButton::indicator:hover {{
                 border: 2px solid {c['accent_blue']};
+                background-color: {c['bg_main']};
             }}
             QRadioButton::indicator:checked {{
                 border: 2px solid {c['accent_blue']};
-                background-color: {c['accent_blue']};
+                background-color: qradialgradient(
+                    cx: 0.5, cy: 0.5, radius: 0.5,
+                    fx: 0.5, fy: 0.5,
+                    stop: 0 {c['accent_blue']},
+                    stop: 0.40 {c['accent_blue']},
+                    stop: 0.50 transparent,
+                    stop: 1 transparent
+                );
             }}
             QRadioButton::indicator:checked:hover {{
                 border: 2px solid {c['accent_blue']};
-                background-color: {c['accent_blue']};
+                background-color: qradialgradient(
+                    cx: 0.5, cy: 0.5, radius: 0.5,
+                    fx: 0.5, fy: 0.5,
+                    stop: 0 {c['accent_blue']},
+                    stop: 0.40 {c['accent_blue']},
+                    stop: 0.50 transparent,
+                    stop: 1 transparent
+                );
             }}
-            QGroupBox {{
-                color: {c['text_primary']};
-                border: 1px solid {c['border']};
-                border-radius: {RADIUS_SM}px;
-                margin-top: 10px;
-                padding-top: 8px;
-                background-color: {c['bg_panel']};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 4px;
-                color: {c['text_primary']};
-            }}
-            QComboBox {{
-                background-color: {c['bg_main']};
-                color: {c['text_primary']};
-                border: 1px solid {c['border']};
-                border-radius: {RADIUS_SM}px;
-                padding: 4px 6px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: {c['bg_panel']};
-                color: {c['text_primary']};
-                selection-background-color: {c['accent_blue']};
-                selection-color: #FFFFFF;
-            }}
-            QPushButton {{
-                background-color: {c['bg_panel']};
-                color: {c['text_primary']};
-                border: 1px solid {c['border']};
-                border-radius: {RADIUS_SM}px;
-                padding: 6px 16px;
-            }}
-            QPushButton:hover {{
-                border: 1px solid {c['accent_blue']};
-            }}
-            QScrollArea {{
-                background: transparent;
-                border: none;
-            }}
-            QScrollArea > QWidget > QWidget {{
-                background: transparent;
-            }}
-        """)
-
-    

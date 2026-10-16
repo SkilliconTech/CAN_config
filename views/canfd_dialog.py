@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QFrame,
 )
+from resources.theme import RADIUS_SM
 from models.constants import DEFAULT_CANFD
 
 
@@ -330,3 +331,60 @@ class CANFDSettingsDialog(QWidget):
             getattr(self.parent_window, "canfd_settings", DEFAULT_CANFD)
         )
         self._restore_settings()
+
+    def set_theme(self, c):
+        """Match light/dark colors used by Log Configuration."""
+        self.setStyleSheet(f"""
+            QWidget {{
+                background-color: transparent;
+                color: {c['text_primary']};
+            }}
+            QLabel, QRadioButton {{
+                color: {c['text_primary']};
+                background: transparent;
+            }}
+            QGroupBox {{
+                color: {c['text_primary']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+                margin-top: 10px;
+                padding-top: 8px;
+                background-color: {c['bg_panel']};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 4px;
+                color: {c['text_primary']};
+            }}
+            QComboBox {{
+                background-color: {c['bg_main']};
+                color: {c['text_primary']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+                padding: 4px 6px;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {c['bg_panel']};
+                color: {c['text_primary']};
+                selection-background-color: {c['accent_blue']};
+                selection-color: #FFFFFF;
+            }}
+            QPushButton {{
+                background-color: {c['bg_panel']};
+                color: {c['text_primary']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+                padding: 6px 16px;
+            }}
+            QPushButton:hover {{
+                border: 1px solid {c['accent_blue']};
+            }}
+            QScrollArea {{
+                background: transparent;
+                border: none;
+            }}
+            QScrollArea > QWidget > QWidget {{
+                background: transparent;
+            }}
+        """)

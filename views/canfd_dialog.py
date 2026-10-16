@@ -179,6 +179,36 @@ class CANFDSettingsDialog(QWidget):
         main_layout.addLayout(bottom_layout)
 
         main_layout.addStretch(1)
+    def apply_to_parent(self):
+        if self.parent_window is not None:
+            self.parent_window.canfd_settings = self._collect_settings()
+
+    def on_apply(self):
+        self.apply_to_parent()
+        if self.parent_window is not None:
+            self.parent_window.statusBar().showMessage(
+                "CAN FD settings applied", 3000
+            )
+
+    def on_save(self):
+        self.apply_to_parent()
+        if self.parent_window is not None:
+            self.parent_window.on_save()
+
+    def on_cancel(self):
+        self.load_from_parent()
+        if self.parent_window is not None:
+            self.parent_window.statusBar().showMessage(
+                "CAN FD changes cancelled", 3000
+            )
+
+    def load_from_parent(self):
+        if self.parent_window is None:
+            return
+        self.settings = dict(
+            getattr(self.parent_window, "canfd_settings", DEFAULT_CANFD)
+        )
+        self._restore_settings()
         action_row = QHBoxLayout()
         action_row.addStretch(1)
 
@@ -195,17 +225,18 @@ class CANFDSettingsDialog(QWidget):
         action_row.addWidget(self.cancel_button)
         main_layout.addLayout(action_row)
         
-        # Live apply — MUST be after enable_radio is created
-        self.enable_radio.toggled.connect(self._on_settings_changed)
+        # Only refresh "Current settings" labels while editing
+        self.enable_radio.toggled.connect(self.update_current_settings)
         for combo in (
             self.arbitration_bitrate_combo,
             self.arbitration_sjw_combo,
             self.data_bitrate_combo,
             self.data_sjw_combo,
         ):
-            combo.currentTextChanged.connect(self._on_settings_changed)
+            combo.currentTextChanged.connect(self.update_current_settings)
 
         self._restore_settings()
+
 
     @staticmethod
     def _split_bitrate(text):
@@ -286,11 +317,6 @@ class CANFDSettingsDialog(QWidget):
             "data_sjw": self.data_sjw_combo.currentText(),
             "enabled": self.enable_radio.isChecked(),
         }
-
-    
-    def _on_settings_changed(self, *_args):
-        self.update_current_settings()
-        self.apply_to_parent()
 
     def apply_to_parent(self):
         if self.parent_window is not None:

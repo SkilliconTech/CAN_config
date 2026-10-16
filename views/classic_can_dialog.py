@@ -31,21 +31,9 @@ class ClassicCANSettingsDialog(QWidget):
         else:
             self.settings = dict(default_settings)
 
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(0)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
-        outer.addWidget(scroll)
-
-        body = QWidget()
-        scroll.setWidget(body)
-
-        main_layout = QVBoxLayout(body)
-        main_layout.setContentsMargins(4, 4, 4, 4)
-        main_layout.setSpacing(12)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(8)
 
         # Bus parameter selection
         bus_mode_layout = QHBoxLayout()
@@ -61,7 +49,7 @@ class ClassicCANSettingsDialog(QWidget):
         # Bus parameters
         bus_group = QGroupBox("Bus parameters")
         bus_layout = QVBoxLayout(bus_group)
-        bus_layout.setSpacing(10)
+        bus_layout.setSpacing(6)
 
         bitrate_layout = QHBoxLayout()
         bitrate_label = QLabel("Bitrate and\nsampling point:")
@@ -110,7 +98,7 @@ class ClassicCANSettingsDialog(QWidget):
 
         # Options and Store settings
         bottom_layout = QHBoxLayout()
-        bottom_layout.setSpacing(20)
+        bottom_layout.setSpacing(12)
 
         options_group = QGroupBox("Options")
         options_layout = QVBoxLayout(options_group)
@@ -131,7 +119,7 @@ class ClassicCANSettingsDialog(QWidget):
 
         store_group = QGroupBox("Store settings")
         store_layout = QVBoxLayout(store_group)
-        store_layout.setSpacing(10)
+        store_layout.setSpacing(6)
 
         apply_all_layout = QHBoxLayout()
         apply_all_button = QPushButton("Apply to all")

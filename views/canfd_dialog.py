@@ -179,6 +179,21 @@ class CANFDSettingsDialog(QWidget):
         main_layout.addLayout(bottom_layout)
 
         main_layout.addStretch(1)
+        action_row = QHBoxLayout()
+        action_row.addStretch(1)
+
+        self.apply_button = QPushButton("Apply")
+        self.save_button = QPushButton("Save")
+        self.cancel_button = QPushButton("Cancel")
+
+        self.apply_button.clicked.connect(self.on_apply)
+        self.save_button.clicked.connect(self.on_save)
+        self.cancel_button.clicked.connect(self.on_cancel)
+
+        action_row.addWidget(self.apply_button)
+        action_row.addWidget(self.save_button)
+        action_row.addWidget(self.cancel_button)
+        main_layout.addLayout(action_row)
         
         # Live apply — MUST be after enable_radio is created
         self.enable_radio.toggled.connect(self._on_settings_changed)

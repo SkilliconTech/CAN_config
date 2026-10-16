@@ -1,3 +1,4 @@
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -6,11 +7,10 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QComboBox,
     QRadioButton,
+    QPushButton,
     QScrollArea,
     QFrame,
-    QPushButton
 )
-from PySide6.QtCore import Qt
 from models.constants import DEFAULT_CANFD
 
 
@@ -26,16 +26,15 @@ class CANFDSettingsDialog(QWidget):
         )
         super().__init__(parent)
 
-       
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(0)
+        outer.setSpacing(8)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        outer.addWidget(scroll)
+        outer.addWidget(scroll, 1)
 
         body = QWidget()
         scroll.setWidget(body)
@@ -45,7 +44,6 @@ class CANFDSettingsDialog(QWidget):
         main_layout.setSpacing(8)
 
         # Arbitration phase parameters
-
         arbitration_group = QGroupBox("Arbitration phase parameters")
         arbitration_layout = QVBoxLayout(arbitration_group)
         arbitration_layout.setSpacing(6)
@@ -57,7 +55,6 @@ class CANFDSettingsDialog(QWidget):
             "500 kbits/s, 80%",
             "1000 kbits/s, 80%",
         ])
-        
 
         arbitration_bitrate_layout.addWidget(arbitration_bitrate_label)
         arbitration_bitrate_layout.addWidget(arbitration_bitrate_combo, 1)
@@ -91,7 +88,6 @@ class CANFDSettingsDialog(QWidget):
             "5000 kbits/s, 75.00%",
             "8000 kbits/s, 80.00%",
         ])
-        
 
         data_bitrate_layout.addWidget(data_bitrate_label)
         data_bitrate_layout.addWidget(data_bitrate_combo, 1)
@@ -109,8 +105,6 @@ class CANFDSettingsDialog(QWidget):
 
         main_layout.addWidget(data_group)
 
-        
-        # Keep references so the Current settings can read the combos
         self.arbitration_bitrate_combo = arbitration_bitrate_combo
         self.arbitration_sjw_combo = arbitration_sjw_combo
         self.data_bitrate_combo = data_bitrate_combo
@@ -142,7 +136,6 @@ class CANFDSettingsDialog(QWidget):
 
         main_layout.addWidget(current_group)
 
-        
         # Options and Store settings
         bottom_layout = QHBoxLayout()
         bottom_layout.setSpacing(12)
@@ -158,7 +151,6 @@ class CANFDSettingsDialog(QWidget):
         options_layout.addStretch(1)
 
         bottom_layout.addWidget(options_group)
-
 
         store_group = QGroupBox("Store settings")
         store_layout = QVBoxLayout(store_group)
@@ -195,37 +187,10 @@ class CANFDSettingsDialog(QWidget):
         main_layout.addLayout(bottom_layout)
 
         main_layout.addStretch(1)
-    def apply_to_parent(self):
-        if self.parent_window is not None:
-            self.parent_window.canfd_settings = self._collect_settings()
 
-    def on_apply(self):
-        self.apply_to_parent()
-        if self.parent_window is not None:
-            self.parent_window.statusBar().showMessage(
-                "CAN FD settings applied", 3000
-            )
-
-    def on_save(self):
-        self.apply_to_parent()
-        if self.parent_window is not None:
-            self.parent_window.on_save()
-
-    def on_cancel(self):
-        self.load_from_parent()
-        if self.parent_window is not None:
-            self.parent_window.statusBar().showMessage(
-                "CAN FD changes cancelled", 3000
-            )
-
-    def load_from_parent(self):
-        if self.parent_window is None:
-            return
-        self.settings = dict(
-            getattr(self.parent_window, "canfd_settings", DEFAULT_CANFD)
-        )
-        self._restore_settings()
+        # Apply / Save / Cancel — fixed under scroll (always visible)
         action_row = QHBoxLayout()
+        action_row.setContentsMargins(4, 0, 4, 0)
         action_row.addStretch(1)
 
         self.apply_button = QPushButton("Apply")
@@ -239,9 +204,8 @@ class CANFDSettingsDialog(QWidget):
         action_row.addWidget(self.apply_button)
         action_row.addWidget(self.save_button)
         action_row.addWidget(self.cancel_button)
-        main_layout.addLayout(action_row)
-        
-        # Only refresh "Current settings" labels while editing
+        outer.addLayout(action_row)
+
         self.enable_radio.toggled.connect(self.update_current_settings)
         for combo in (
             self.arbitration_bitrate_combo,
@@ -252,7 +216,6 @@ class CANFDSettingsDialog(QWidget):
             combo.currentTextChanged.connect(self.update_current_settings)
 
         self._restore_settings()
-
 
     @staticmethod
     def _split_bitrate(text):
@@ -338,6 +301,25 @@ class CANFDSettingsDialog(QWidget):
         if self.parent_window is not None:
             self.parent_window.canfd_settings = self._collect_settings()
 
+    def on_apply(self):
+        self.apply_to_parent()
+        if self.parent_window is not None:
+            self.parent_window.statusBar().showMessage(
+                "CAN FD settings applied", 3000
+            )
+
+    def on_save(self):
+        self.apply_to_parent()
+        if self.parent_window is not None:
+            self.parent_window.on_save()
+
+    def on_cancel(self):
+        self.load_from_parent()
+        if self.parent_window is not None:
+            self.parent_window.statusBar().showMessage(
+                "CAN FD changes cancelled", 3000
+            )
+
     def load_from_parent(self):
         if self.parent_window is None:
             return
@@ -345,4 +327,3 @@ class CANFDSettingsDialog(QWidget):
             getattr(self.parent_window, "canfd_settings", DEFAULT_CANFD)
         )
         self._restore_settings()
-

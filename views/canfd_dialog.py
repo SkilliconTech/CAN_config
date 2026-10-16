@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QFrame,
 )
 from resources.theme import RADIUS_SM
+from views.check_radio import CheckRadioButton
 from models.constants import DEFAULT_CANFD
 
 
@@ -144,8 +145,8 @@ class CANFDSettingsDialog(QWidget):
         options_group = QGroupBox("Options")
         options_layout = QVBoxLayout(options_group)
 
-        self.enable_radio = QRadioButton("Enable")
-        self.disable_radio = QRadioButton("Disable")
+        self.enable_radio = CheckRadioButton("Enable")
+        self.disable_radio = CheckRadioButton("Disable")
 
         options_layout.addWidget(self.enable_radio)
         options_layout.addWidget(self.disable_radio)
@@ -346,25 +347,41 @@ class CANFDSettingsDialog(QWidget):
             QRadioButton {{
                 color: {c['text_primary']};
                 background: transparent;
-                spacing: 8px;
+                spacing: 10px;
+                padding: 4px 0;
             }}
             QRadioButton::indicator {{
-                width: 16px;
-                height: 16px;
-                border-radius: 9px;
+                width: 18px;
+                height: 18px;
+                border-radius: 10px;
                 border: 2px solid {c['border']};
                 background-color: {c['bg_main']};
             }}
             QRadioButton::indicator:hover {{
                 border: 2px solid {c['accent_blue']};
+                background-color: {c['bg_main']};
             }}
             QRadioButton::indicator:checked {{
                 border: 2px solid {c['accent_blue']};
-                background-color: {c['accent_blue']};
+                background-color: qradialgradient(
+                    cx: 0.5, cy: 0.5, radius: 0.5,
+                    fx: 0.5, fy: 0.5,
+                    stop: 0 {c['accent_blue']},
+                    stop: 0.40 {c['accent_blue']},
+                    stop: 0.50 transparent,
+                    stop: 1 transparent
+                );
             }}
             QRadioButton::indicator:checked:hover {{
                 border: 2px solid {c['accent_blue']};
-                background-color: {c['accent_blue']};
+                background-color: qradialgradient(
+                    cx: 0.5, cy: 0.5, radius: 0.5,
+                    fx: 0.5, fy: 0.5,
+                    stop: 0 {c['accent_blue']},
+                    stop: 0.40 {c['accent_blue']},
+                    stop: 0.50 transparent,
+                    stop: 1 transparent
+                );
             }}
             QGroupBox {{
                 color: {c['text_primary']};
@@ -411,3 +428,5 @@ class CANFDSettingsDialog(QWidget):
                 background: transparent;
             }}
         """)
+        self.enable_radio.set_colors(c)
+        self.disable_radio.set_colors(c)

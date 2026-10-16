@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QPushButton
 )
 from resources.theme import RADIUS_SM
+from views.check_radio import CheckRadioButton
 from PySide6.QtCore import Qt
 from models.constants import DEFAULT_CLASSIC_CAN
 
@@ -117,8 +118,8 @@ class ClassicCANSettingsDialog(QWidget):
         options_group = QGroupBox("Options")
         options_layout = QVBoxLayout(options_group)
 
-        self.enable_radio = QRadioButton("Enable")
-        self.disable_radio = QRadioButton("Disable")
+        self.enable_radio = CheckRadioButton("Enable")
+        self.disable_radio = CheckRadioButton("Disable")
 
         if self.settings.get("enabled", False):
             self.enable_radio.setChecked(True)
@@ -333,18 +334,6 @@ class ClassicCANSettingsDialog(QWidget):
             QRadioButton {{
                 color: {c['text_primary']};
                 background: transparent;
-                spacing: 8px;
-            }}
-            QRadioButton::indicator {{
-                width: 16px;
-                height: 16px;
-                border-radius: 9px;
-                border: 2px solid {c['border']};
-                background-color: {c['bg_main']};
-            }}
-            QRadioButton {{
-                color: {c['text_primary']};
-                background: transparent;
                 spacing: 10px;
                 padding: 4px 0;
             }}
@@ -381,3 +370,52 @@ class ClassicCANSettingsDialog(QWidget):
                     stop: 1 transparent
                 );
             }}
+            QGroupBox {{
+                color: {c['text_primary']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+                margin-top: 10px;
+                padding-top: 8px;
+                background-color: {c['bg_panel']};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 4px;
+                color: {c['text_primary']};
+            }}
+            QComboBox {{
+                background-color: {c['bg_main']};
+                color: {c['text_primary']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+                padding: 4px 6px;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {c['bg_panel']};
+                color: {c['text_primary']};
+                selection-background-color: {c['accent_blue']};
+                selection-color: #FFFFFF;
+            }}
+            QPushButton {{
+                background-color: {c['bg_panel']};
+                color: {c['text_primary']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+                padding: 6px 16px;
+            }}
+            QPushButton:hover {{
+                border: 1px solid {c['accent_blue']};
+            }}
+            QScrollArea {{
+                background: transparent;
+                border: none;
+            }}
+            QScrollArea > QWidget > QWidget {{
+                background: transparent;
+            }}
+        """)
+        self.enable_radio.set_colors(c)
+        self.disable_radio.set_colors(c)
+
+    

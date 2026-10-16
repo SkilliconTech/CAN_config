@@ -6,9 +6,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QComboBox,
     QRadioButton,
-    QPushButton,
-    QScrollArea,
-    QFrame,
+    QPushButton
 )
 from models.constants import DEFAULT_CANFD
 
@@ -34,7 +32,7 @@ class CANFDSettingsDialog(QWidget):
 
         arbitration_group = QGroupBox("Arbitration phase parameters")
         arbitration_layout = QVBoxLayout(arbitration_group)
-        arbitration_layout.setSpacing(10)
+        arbitration_layout.setSpacing(6)
 
         arbitration_bitrate_layout = QHBoxLayout()
         arbitration_bitrate_label = QLabel("Bitrate and\nsampling point:")
@@ -64,7 +62,7 @@ class CANFDSettingsDialog(QWidget):
         # Data phase parameters
         data_group = QGroupBox("Data phase parameters")
         data_layout = QVBoxLayout(data_group)
-        data_layout.setSpacing(10)
+        data_layout.setSpacing(6)
 
         data_bitrate_layout = QHBoxLayout()
         data_bitrate_label = QLabel("Bitrate and\nsampling point:")
@@ -131,7 +129,7 @@ class CANFDSettingsDialog(QWidget):
         
         # Options and Store settings
         bottom_layout = QHBoxLayout()
-        bottom_layout.setSpacing(20)
+        bottom_layout.setSpacing(12)
 
         options_group = QGroupBox("Options")
         options_layout = QVBoxLayout(options_group)
@@ -148,7 +146,7 @@ class CANFDSettingsDialog(QWidget):
 
         store_group = QGroupBox("Store settings")
         store_layout = QVBoxLayout(store_group)
-        store_layout.setSpacing(10)
+        store_layout.setSpacing(6)
 
         apply_all_layout = QHBoxLayout()
         apply_all_button = QPushButton("Apply to all")

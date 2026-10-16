@@ -172,16 +172,9 @@ class ClassicCANSettingsDialog(QWidget):
         main_layout.addLayout(action_row)
 
         # Functional connections
-        self.bitrate_combo.currentTextChanged.connect(
-            self._on_settings_changed
-        )
-        self.sjw_combo.currentTextChanged.connect(
-            self._on_settings_changed
-        )
-        self.enable_radio.toggled.connect(
-            self._on_settings_changed
-        )
-
+        self.bitrate_combo.currentTextChanged.connect(self.update_current_settings)
+        self.sjw_combo.currentTextChanged.connect(self.update_current_settings)
+        self.enable_radio.toggled.connect(self.update_current_settings)
         apply_all_button.clicked.connect(
             self.apply_to_all
         )

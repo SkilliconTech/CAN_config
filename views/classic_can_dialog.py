@@ -260,9 +260,27 @@ class ClassicCANSettingsDialog(QWidget):
                 settings
             )
 
-    def _on_settings_changed(self, *_args):
-        self.update_current_settings()
+    def on_apply(self):
+        """Apply: update model only (no file write)."""
         self.apply_to_parent()
+        if self.parent_window is not None:
+            self.parent_window.statusBar().showMessage(
+                "Classic CAN settings applied", 3000
+            )
+
+    def on_save(self):
+        """Save: apply to model, then save configuration file."""
+        self.apply_to_parent()
+        if self.parent_window is not None:
+            self.parent_window.on_save()
+
+    def on_cancel(self):
+        """Cancel: discard form edits and reload last applied settings."""
+        self.load_from_parent()
+        if self.parent_window is not None:
+            self.parent_window.statusBar().showMessage(
+                "Classic CAN changes cancelled", 3000
+            )
 
     def apply_to_parent(self):
         settings = self._collect_settings()

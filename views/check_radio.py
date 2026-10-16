@@ -9,6 +9,20 @@ BOX = 20      # size of the square, in pixels
 GAP = 10      # space between the square and the text
 RADIUS = 5    # corner roundness of the square
 
+# How strongly a hovered, selected box moves toward the text color
+# (0 = no change, 1 = fully the text color). Dark in light mode,
+# light in dark mode.
+HOVER_BLEND = 0.35
+
+
+def _blend(color_a, color_b, amount):
+    """Mix two colors: amount 0 gives color_a, amount 1 gives color_b."""
+    return QColor(
+        round(color_a.red() + (color_b.red() - color_a.red()) * amount),
+        round(color_a.green() + (color_b.green() - color_a.green()) * amount),
+        round(color_a.blue() + (color_b.blue() - color_a.blue()) * amount),
+    )
+
 
 def _size_hint(widget):
     metrics = widget.fontMetrics()
@@ -40,12 +54,16 @@ def _paint(widget, c):
 
     accent = QColor(c["accent_blue"])
 
+    # text_primary is dark in light mode and light in dark mode,
+    # so hovering follows the theme automatically
+    hover_color = QColor(c["text_primary"])
+
     if checked:
-        fill = accent.darker(110) if hovered else accent
+        fill = _blend(accent, hover_color, HOVER_BLEND) if hovered else accent
         border = fill
     else:
         fill = QColor(c["bg_main"])
-        border = accent if hovered else QColor(c["text_secondary"])
+        border = hover_color if hovered else QColor(c["text_secondary"])
 
     pen = QPen(border)
     pen.setWidthF(2)

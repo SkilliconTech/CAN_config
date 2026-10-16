@@ -38,6 +38,7 @@ from services.config_validator import (
 )
 
 from resources.theme import RADIUS_SM
+from views.check_radio import CheckStyleCheckBox
 from PySide6.QtGui import QFont
 
 class LogConfigWidget(QStackedWidget):
@@ -103,10 +104,10 @@ class LogConfigWidget(QStackedWidget):
             ("Recording duration", "duration"),
         ])
         self.start_id, self.stop_id = QLineEdit("0x123"), QLineEdit("0x124")
-        self.start_ext = QCheckBox("Extended ID")
-        self.stop_ext = QCheckBox("Extended ID")
+        self.start_ext = CheckStyleCheckBox("Extended ID")
+        self.stop_ext = CheckStyleCheckBox("Extended ID")
         self.duration = make_spin(1, 604800, " seconds")
-        self.rearm = QCheckBox("Wait for a new start ID after a normal stop")
+        self.rearm = CheckStyleCheckBox("Wait for a new start ID after a normal stop")
 
         for label, w in [("Start recording", self.start),
                          ("Start ID", self.start_id), ("", self.start_ext),
@@ -128,8 +129,8 @@ class LogConfigWidget(QStackedWidget):
         form = QFormLayout(page)
         form.setContentsMargins(0, 0, 0, 0)
 
-        self.asc = QCheckBox("ASC")
-        self.mf4 = QCheckBox("MF4 (ASAM MDF 4)")
+        self.asc = CheckStyleCheckBox("ASC")
+        self.mf4 = CheckStyleCheckBox("MF4 (ASAM MDF 4)")
         self.size_limit = make_spin(1048576, 2146435072, " bytes")
         self.time_limit = make_spin(0, 604800, " seconds")
         self.time_limit.setSpecialValueText("Disabled")
@@ -436,3 +437,11 @@ class LogConfigWidget(QStackedWidget):
                 border: 1px solid {c['accent_blue']};
             }}
         """)
+        for box in (
+            self.start_ext,
+            self.stop_ext,
+            self.rearm,
+            self.asc,
+            self.mf4,
+        ):
+            box.set_colors(c)

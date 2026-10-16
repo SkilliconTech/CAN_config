@@ -339,9 +339,32 @@ class CANFDSettingsDialog(QWidget):
                 background-color: transparent;
                 color: {c['text_primary']};
             }}
-            QLabel, QRadioButton {{
+            QLabel {{
                 color: {c['text_primary']};
                 background: transparent;
+            }}
+            QRadioButton {{
+                color: {c['text_primary']};
+                background: transparent;
+                spacing: 8px;
+            }}
+            QRadioButton::indicator {{
+                width: 16px;
+                height: 16px;
+                border-radius: 9px;
+                border: 2px solid {c['border']};
+                background-color: {c['bg_main']};
+            }}
+            QRadioButton::indicator:hover {{
+                border: 2px solid {c['accent_blue']};
+            }}
+            QRadioButton::indicator:checked {{
+                border: 2px solid {c['accent_blue']};
+                background-color: {c['accent_blue']};
+            }}
+            QRadioButton::indicator:checked:hover {{
+                border: 2px solid {c['accent_blue']};
+                background-color: {c['accent_blue']};
             }}
             QGroupBox {{
                 color: {c['text_primary']};

@@ -447,10 +447,6 @@ class ConfigurationTool(QMainWindow):
         self.act_import.setToolTip("Import settings from a JSON file")
         self.act_import.triggered.connect(self.on_import)
 
-        self.act_export = QAction("Export", self)
-        self.act_export.setToolTip("Export settings to a JSON file")
-        self.act_export.triggered.connect(self.on_export)
-
         # Make the Ctrl+S / Ctrl+Shift+S shortcuts work anywhere in the window
         self.addAction(self.act_save)
         self.addAction(self.act_save_as)
@@ -472,7 +468,7 @@ class ConfigurationTool(QMainWindow):
         self.toolbar.addWidget(self.save_button)
         self.toolbar.addSeparator()
         self.toolbar.addAction(self.act_import)
-        self.toolbar.addAction(self.act_export)
+        
 
     def _refresh_toolbar_theme(self, c):
         for action, name in (
@@ -480,7 +476,6 @@ class ConfigurationTool(QMainWindow):
             (self.act_open, "open"),
             (self.act_save, "save"),
             (self.act_import, "import"),
-            (self.act_export, "export"),
         ):
             action.setIcon(tinted_icon(name, c["toggle_icon"]))
 

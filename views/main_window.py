@@ -309,6 +309,25 @@ class ConfigurationTool(QMainWindow):
         )
 
         topbar.addStretch(1)
+        # ---- Skillicon Technologies brand (top-right) ----
+        self.skillicon_btn = QPushButton("Skillicon Technologies")
+        self.skillicon_btn.setObjectName("skilliconBrand")
+        self.skillicon_btn.setCursor(Qt.PointingHandCursor)
+        self.skillicon_btn.setToolTip("Visit skillicon.in")
+        self.skillicon_btn.setFlat(True)
+
+        # Modern typography
+        brand_font = QFont(FONT_FAMILY, 11)
+        brand_font.setWeight(QFont.DemiBold)
+        self.skillicon_btn.setFont(brand_font)
+
+        # Open website on click
+        self.skillicon_btn.clicked.connect(
+          lambda: QDesktopServices.openUrl(QUrl("https://skillicon.in/"))
+        )
+
+        topbar.addWidget(self.skillicon_btn)
+        topbar.addSpacing(16)   # nice gap before Help / theme buttons                   
         # Help button (left of the theme button)
         self.help_button = QPushButton("?")
         self.help_button.setObjectName("helpButton")

@@ -17,6 +17,7 @@ def make_spin(low, high, suffix=""):
     w = QSpinBox()
     w.setRange(low, high)
     w.setSuffix(suffix)
+    w.setAccelerated(True)
     return w
 
 

@@ -308,7 +308,17 @@ class ConfigurationTool(QMainWindow):
         )
 
         topbar.addStretch(1)
+        # Help button (left of the theme button)
+        self.help_button = QPushButton("?")
+        self.help_button.setObjectName("helpButton")
+        self.help_button.setFixedSize(42, 42)
+        self.help_button.setFont(QFont(FONT_FAMILY, 13, QFont.Bold))
+        self.help_button.setCursor(Qt.PointingHandCursor)
+        self.help_button.setToolTip("Help")
+        self.help_button.clicked.connect(self.on_help)
 
+        topbar.addWidget(self.help_button)
+        topbar.addSpacing(8)
         self.theme_toggle = QPushButton()
         self.theme_toggle.setObjectName(
             "themeToggle"
@@ -910,6 +920,20 @@ class ConfigurationTool(QMainWindow):
             }}
 
             #themeToggle:hover {{
+                border: 1px solid {c['accent_blue']};
+            }}
+            """
+        )
+        self.help_button.setStyleSheet(
+            f"""
+            #helpButton {{
+                background-color: {c['bg_panel']};
+                color: {c['text_primary']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+            }}
+
+            #helpButton:hover {{
                 border: 1px solid {c['accent_blue']};
             }}
             """

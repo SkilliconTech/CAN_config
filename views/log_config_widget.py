@@ -38,6 +38,7 @@ from services.config_validator import (
 )
 
 from resources.theme import RADIUS_SM
+from resources.spin_style import spinbox_stylesheet
 from views.check_radio import CheckStyleCheckBox
 from PySide6.QtGui import QFont
 
@@ -131,8 +132,8 @@ class LogConfigWidget(QStackedWidget):
 
         self.asc = CheckStyleCheckBox("ASC")
         self.mf4 = CheckStyleCheckBox("MF4 (ASAM MDF 4)")
-        self.size_limit = make_spin(1048576, 2146435072, " bytes")
-        self.time_limit = make_spin(0, 604800, " seconds")
+        self.size_limit = make_spin(1, 100, " MB")
+        self.time_limit = make_spin(0, 60, " minutes")
         self.time_limit.setSpecialValueText("Disabled")
 
         for label, w in [("Formats", self.asc), ("", self.mf4),
@@ -238,8 +239,8 @@ class LogConfigWidget(QStackedWidget):
         data["logging"].update(
             formats=[name for name, w in [("asc", self.asc), ("mf4", self.mf4)]
                      if w.isChecked()],
-            file_split_size_bytes=self.size_limit.value(),
-            file_split_time_seconds=self.time_limit.value(),
+            file_split_size_bytes=self.size_limit.value() * 1024 * 1024,
+            file_split_time_seconds=self.time_limit.value() * 60,
         )
         return data
 
@@ -265,8 +266,13 @@ class LogConfigWidget(QStackedWidget):
 
         self.asc.setChecked("asc" in data["logging"]["formats"])
         self.mf4.setChecked("mf4" in data["logging"]["formats"])
-        self.size_limit.setValue(data["logging"]["file_split_size_bytes"])
-        self.time_limit.setValue(data["logging"]["file_split_time_seconds"])
+        size_bytes = data["logging"]["file_split_size_bytes"]
+        time_seconds = data["logging"]["file_split_time_seconds"]
+
+        self.size_limit.setValue(max(1, round(size_bytes / (1024 * 1024))))
+        self.time_limit.setValue(
+            0 if time_seconds == 0 else max(1, round(time_seconds / 60))
+        )
 
         self.update_controls()
         if self.currentIndex() == self.PAGES.index("preview"):
@@ -394,14 +400,14 @@ class LogConfigWidget(QStackedWidget):
             QLabel:disabled, QCheckBox:disabled {{
                 color: {c['text_secondary']};
             }}
-            QLineEdit, QSpinBox, QComboBox, QPlainTextEdit {{
+            QLineEdit, QComboBox, QPlainTextEdit {{
                 background-color: {c['bg_main']};
                 color: {c['text_primary']};
                 border: 1px solid {c['border']};
                 border-radius: {RADIUS_SM}px;
                 padding: 4px 6px;
             }}
-            QLineEdit:disabled, QSpinBox:disabled, QComboBox:disabled {{
+            QLineEdit:disabled, QComboBox:disabled {{
                 color: {c['text_secondary']};
             }}
             QComboBox QAbstractItemView {{
@@ -436,7 +442,7 @@ class LogConfigWidget(QStackedWidget):
             QPushButton:hover {{
                 border: 1px solid {c['accent_blue']};
             }}
-        """)
+        """ + spinbox_stylesheet(c))
         for box in (
             self.start_ext,
             self.stop_ext,

@@ -1,4 +1,4 @@
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 import json
 import copy
 
@@ -44,6 +44,7 @@ from PySide6.QtGui import QFont
 
 class LogConfigWidget(QStackedWidget):
     configuration_changed = Signal()
+    generate_requested = Signal()
     PAGES = ("filters", "triggers", "logfiles", "preview")
 
     def __init__(self, get_full_config, show_status, parent=None):
@@ -149,10 +150,28 @@ class LogConfigWidget(QStackedWidget):
         self.addWidget(page)
 
         # ---------------- JSON Preview page ----------------
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+
         self.preview = QPlainTextEdit()
         self.preview.setReadOnly(True)
         self.preview.setFont(QFont("Consolas", 10))
-        self.addWidget(self.preview)
+        layout.addWidget(self.preview, 1)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch(1)
+
+        self.generate_button = QPushButton("Generate Config")
+        self.generate_button.setObjectName("generateButton")
+        self.generate_button.setCursor(Qt.PointingHandCursor)
+        self.generate_button.setMinimumWidth(170)
+        self.generate_button.clicked.connect(self._on_generate_clicked)
+        button_row.addWidget(self.generate_button)
+
+        layout.addLayout(button_row)
+        self.addWidget(page)
 
         for w in (self.start, self.stop):
             w.currentIndexChanged.connect(self.update_controls)
@@ -381,9 +400,13 @@ class LogConfigWidget(QStackedWidget):
         self.notify_configuration_changed()
 
     # ---------------- JSON preview ----------------
+    def _on_generate_clicked(self):
+        # The main window listens to this signal and exports the file
+        self.generate_requested.emit()
+
     def refresh_preview(self):
-        self.preview.setPlainText(json.dumps(self.get_full_config(), indent=2))
         try:
+            self.preview.setPlainText(json.dumps(self.get_full_config(), indent=2))
             validate_log_config(self.collect())
             self.show_status(
                 "Valid configuration; device must verify firmware capabilities.")
@@ -441,6 +464,15 @@ class LogConfigWidget(QStackedWidget):
             }}
             QPushButton:hover {{
                 border: 1px solid {c['accent_blue']};
+            }}
+            QPushButton#generateButton {{
+                background-color: {c['accent_blue']};
+                color: #FFFFFF;
+                border: 1px solid {c['accent_blue']};
+                font-weight: 600;
+            }}
+            QPushButton#generateButton:hover {{
+                border: 1px solid {c['text_primary']};
             }}
         """ + spinbox_stylesheet(c))
         for box in (

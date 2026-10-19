@@ -474,9 +474,7 @@ class ConfigurationTool(QMainWindow):
 
         self.toolbar.addAction(self.act_new)
         self.toolbar.addAction(self.act_open)
-        self.toolbar.addSeparator()
         self.toolbar.addWidget(self.save_button)
-        self.toolbar.addSeparator()
         self.toolbar.addAction(self.act_import)
         
 
@@ -778,6 +776,23 @@ class ConfigurationTool(QMainWindow):
             self._show_device_tree()
             self.statusBar().showMessage(f"Imported: {path}", 3000)
 
+    def on_help(self):
+        QMessageBox.information(
+            self,
+            "Help",
+            "Configuration Tool\n\n"
+            "Toolbar\n"
+            "  New (Ctrl+N)  start a new configuration\n"
+            "  Open (Ctrl+O)  open a saved configuration\n"
+            "  Save (Ctrl+S)  save; the arrow next to it gives Save As\n"
+            "  Import  load settings from a JSON file\n\n"
+            "Tree on the left\n"
+            "  Bus Configuration  Classic CAN and CAN FD settings\n"
+            "  Log Configuration  Filters, Triggers and Log Files\n"
+            "  JSON Preview  shows the configuration; use "
+            "Generate Config to export it"
+        )
+        
     def on_export(self):
         path, _ = QFileDialog.getSaveFileName(
             self, "Export JSON", "config_export.json", JSON_FILTER

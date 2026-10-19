@@ -367,6 +367,8 @@ class ConfigurationTool(QMainWindow):
         self.log_pages.configuration_changed.connect(
            self.sync_logging_to_model
         )
+        # "Generate Config" button on the JSON Preview page
+        self.log_pages.generate_requested.connect(self.on_export)
 
         self.classic_can_page = ClassicCANSettingsDialog(self)
         self.canfd_page = CANFDSettingsDialog(self)
@@ -600,11 +602,11 @@ class ConfigurationTool(QMainWindow):
     
     def _write_json(self, path: str) -> bool:
 
-      # Step 1: Collect configuration from the UI
-      data = self._collect_config()
-
-      # Step 2: Ask the controller to save
       try:
+        # Step 1: Collect configuration from the UI
+        data = self._collect_config()
+
+        # Step 2: Ask the controller to save
         self.controller.save_configuration(
             path,
             data
@@ -627,8 +629,6 @@ class ConfigurationTool(QMainWindow):
             f"Could not save file:\n{error}"
         )
         return False
-
-
     
     def _read_json(self, path: str) -> bool:
         try:

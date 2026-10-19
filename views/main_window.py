@@ -2,13 +2,14 @@ import os
 import json
 import copy
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize,QUrl
 
 from PySide6.QtGui import (
     QFont,
     QIcon,
     QColor,
-    QAction
+    QAction,
+    QDesktopServices
 )
 
 from PySide6.QtWidgets import (

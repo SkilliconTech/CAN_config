@@ -207,7 +207,7 @@ class ClassicCANSettingsDialog(QWidget):
 
     def _restore_settings(self):
         target = (
-            f"{self.settings.get('bitrate', '50.000 kbits/s')}, "
+            f"{self.settings.get('bitrate', '100.000 kbits/s')}, "
             f"{self.settings.get('sampling_point', '75%')}"
         )
 

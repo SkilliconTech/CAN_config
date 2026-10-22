@@ -493,7 +493,6 @@ class ConfigurationTool(QMainWindow):
         self.save_button.setIconSize(QSize(18, 18))
 
         self.toolbar.addAction(self.act_new)
-        self.toolbar.addAction(self.act_open)
         self.toolbar.addWidget(self.save_button)
         self.toolbar.addAction(self.act_import)
         
@@ -501,9 +500,8 @@ class ConfigurationTool(QMainWindow):
     def _refresh_toolbar_theme(self, c):
         for action, name in (
             (self.act_new, "new"),
-            (self.act_open, "open"),
             (self.act_save, "save"),
-            (self.act_import, "import"),
+            (self.act_import, "open"),
         ):
             action.setIcon(tinted_icon(name, c["toggle_icon"]))
 

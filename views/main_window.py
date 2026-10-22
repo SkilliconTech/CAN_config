@@ -204,10 +204,10 @@ class ConfigurationTool(QMainWindow):
         self.imported_section.setObjectName("importedSection")
         self.imported_section.setAttribute(Qt.WA_StyledBackground, True)
         imported_layout = QVBoxLayout(self.imported_section)
-        imported_layout.setContentsMargins(10, 10, 10, 10)
-        imported_layout.setSpacing(6)
+        imported_layout.setContentsMargins(0, 0, 0, 0)
+        imported_layout.setSpacing(8)
 
-        self.imported_label = QLabel("Imported Files")
+        self.imported_label = QLabel("IMPORTED FILES")
         self.imported_label.setFont(section_font)
         imported_layout.addWidget(self.imported_label)
 
@@ -215,12 +215,35 @@ class ConfigurationTool(QMainWindow):
         self.imported_list.setObjectName("importedList")
         self.imported_list.setUniformItemSizes(True)
         self.imported_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.imported_list.setSpacing(2)
-        self.imported_list.setMaximumHeight(120)   # keep the list compact
+        self.imported_list.setSpacing(4)
+        self.imported_list.setMinimumHeight(180)
+        self.imported_list.setMaximumHeight(220)
         self.imported_list.itemClicked.connect(self.on_imported_file_clicked)
         imported_layout.addWidget(self.imported_list)
-        sidebar_layout.addWidget(self.imported_section, 0)
 
+        # New / Save / Import buttons under the list
+        button_row = QHBoxLayout()
+        button_row.setSpacing(10)
+
+        self.new_button = QPushButton("+  New")
+        self.new_button.setObjectName("newButton")
+        self.new_button.clicked.connect(self.on_new)
+
+        self.save_button = QPushButton("Save")
+        self.save_button.setObjectName("saveButton")
+        self.save_button.clicked.connect(self.on_save)
+
+        self.import_button = QPushButton("Import")
+        self.import_button.setObjectName("importButton")
+        self.import_button.clicked.connect(self.on_import)
+
+        for button in (self.new_button, self.save_button, self.import_button):
+            button.setCursor(Qt.PointingHandCursor)
+            button.setMinimumHeight(40)
+            button_row.addWidget(button)
+
+        imported_layout.addLayout(button_row)
+        sidebar_layout.addWidget(self.imported_section, 0)
         sidebar_layout.addSpacing(12)
 
         # ================================================================
@@ -446,109 +469,33 @@ class ConfigurationTool(QMainWindow):
     # Toolbar
     # ------------------------------------------------------------------
     def _create_toolbar(self):
-        self.toolbar = QToolBar("Main toolbar")
-        self.toolbar.setMovable(False)
-        self.toolbar.setFloatable(False)
-        self.toolbar.setIconSize(QSize(18, 18))
-        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextOnly)
-        self.addToolBar(Qt.TopToolBarArea, self.toolbar)
-
+        # No top toolbar any more: New / Save / Import are sidebar buttons.
+        # The actions stay so the keyboard shortcuts keep working.
         self.act_new = QAction("New", self)
         self.act_new.setShortcut("Ctrl+N")
-        self.act_new.setToolTip("New configuration (Ctrl+N)")
         self.act_new.triggered.connect(self.on_new)
 
         self.act_open = QAction("Open", self)
         self.act_open.setShortcut("Ctrl+O")
-        self.act_open.setToolTip("Open configuration (Ctrl+O)")
         self.act_open.triggered.connect(self.on_open)
 
         self.act_save = QAction("Save", self)
         self.act_save.setShortcut("Ctrl+S")
-        self.act_save.setToolTip("Save (Ctrl+S)")
         self.act_save.triggered.connect(self.on_save)
 
         self.act_save_as = QAction("Save As...", self)
         self.act_save_as.setShortcut("Ctrl+Shift+S")
-        self.act_save_as.setToolTip("Save As (Ctrl+Shift+S)")
         self.act_save_as.triggered.connect(self.on_save_as)
 
         self.act_import = QAction("Import", self)
-        self.act_import.setToolTip("Import settings from a JSON file")
         self.act_import.triggered.connect(self.on_import)
 
-        # Make the Ctrl+S / Ctrl+Shift+S shortcuts work anywhere in the window
-        self.addAction(self.act_save)
-        self.addAction(self.act_save_as)
-
-        # Save button: click = Save, small arrow = Save As
-        save_menu = QMenu(self)
-        save_menu.addAction(self.act_save_as)
-
-        self.save_button = QToolButton()
-        self.save_button.setObjectName("saveButton")
-        self.save_button.setDefaultAction(self.act_save)
-        self.save_button.setMenu(save_menu)
-        self.save_button.setPopupMode(QToolButton.MenuButtonPopup)
-
-        self.new_button = QToolButton()
-        self.new_button.setObjectName("newButton")
-        self.new_button.setDefaultAction(self.act_new)
-
-        self.import_button = QToolButton()
-        self.import_button.setObjectName("importButton")
-        self.import_button.setDefaultAction(self.act_import)
-
-        for button in (self.new_button, self.save_button, self.import_button):
-            button.setToolButtonStyle(Qt.ToolButtonTextOnly)
-            button.setCursor(Qt.PointingHandCursor)
-            button.setMinimumHeight(38)
-            self.toolbar.addWidget(button)
+        for action in (self.act_new, self.act_open,
+                       self.act_save, self.act_save_as):
+            self.addAction(action)
         
 
     def _refresh_toolbar_theme(self, c):
-        
-        self.toolbar.setStyleSheet(
-            f"""
-            QToolBar {{
-                background-color: {c['bg_panel']};
-                border: none;
-                border-bottom: 1px solid {c['border']};
-                spacing: 10px;
-                padding: 8px 12px;
-            }}
-            QToolButton {{
-                color: {c['text_primary']};
-                background-color: {c['btn_bg']};
-                border: 1px solid {c['btn_border']};
-                border-radius: {RADIUS_SM + 2}px;
-                padding: 8px 22px;
-                font-size: 10.5pt;
-                font-weight: 600;
-            }}
-            QToolButton:hover {{
-                border: 1px solid {c['accent_blue']};
-            }}
-            QToolButton:pressed {{
-                background-color: {c['border']};
-            }}
-            QToolButton#newButton {{
-                background-color: {c['bg_main']};
-                border: 1px solid {c['border']};
-                font-weight: 400;
-            }}
-            QToolButton#newButton:hover {{
-                border: 1px solid {c['accent_blue']};
-            }}
-            QToolButton#saveButton {{
-                padding-right: 34px;
-            }}
-            QToolButton::menu-button {{
-                border: none;
-                width: 24px;
-            }}
-            """
-        )
         self.statusBar().setStyleSheet(
             f"QStatusBar {{ background-color: {c['bg_panel']};"
             f" color: {c['text_secondary']}; }}"
@@ -724,7 +671,7 @@ class ConfigurationTool(QMainWindow):
             return
 
         self.imported_files.append(path)
-        item = QListWidgetItem(os.path.basename(path))
+        item = QListWidgetItem("•  " + os.path.basename(path))
         item.setData(Qt.UserRole, path)
         item.setToolTip(path)
         self.imported_list.addItem(item)
@@ -1021,19 +968,20 @@ class ConfigurationTool(QMainWindow):
             """
         )
 
-        # Imported list — transparent inside its section (only once)
         self.imported_list.setStyleSheet(
             f"""
             QListWidget {{
                 background-color: transparent;
                 border: none;
                 outline: 0;
-                padding: 2px;
+                padding: 4px;
+                font-size: 11pt;
             }}
             QListWidget::item {{
                 color: {c['text_primary']};
                 border-radius: {RADIUS_SM}px;
-                padding: 6px 8px;
+                padding: 9px 12px;
+                min-height: 22px;
             }}
             QListWidget::item:hover {{
                 background-color: {c['border']};

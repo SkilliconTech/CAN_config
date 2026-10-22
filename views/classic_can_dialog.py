@@ -71,7 +71,6 @@ class ClassicCANSettingsDialog(QWidget):
 
         self.bitrate_combo = QComboBox()
         self.bitrate_combo.addItems([
-            "50.000 kbits/s, 75%",
             "100.000 kbits/s, 75%",
             "125.000 kbits/s, 75%",
             "250.000 kbits/s, 75%",

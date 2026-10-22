@@ -332,7 +332,7 @@ class ConfigurationTool(QMainWindow):
         self.help_button = QPushButton("?")
         self.help_button.setObjectName("helpButton")
         self.help_button.setFixedSize(42, 42)
-        self.help_button.setFont(QFont(FONT_FAMILY, 13, QFont.Bold))
+        self.help_button.setFont(QFont(FONT_FAMILY, 16, QFont.Bold))
         self.help_button.setCursor(Qt.PointingHandCursor)
         self.help_button.setToolTip("Help")
         self.help_button.clicked.connect(self.on_help)

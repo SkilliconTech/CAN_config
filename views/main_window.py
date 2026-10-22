@@ -2,7 +2,7 @@ import os
 import json
 import copy
 
-from PySide6.QtCore import Qt, QSize,QUrl
+from PySide6.QtCore import Qt, QSize, QUrl, QTimer
 
 from PySide6.QtGui import (
     QFont,
@@ -128,7 +128,8 @@ class ConfigurationTool(QMainWindow):
         self.canfd_settings = self.controller.get_canfd()
 
         self.setWindowTitle("Configuration Tool")
-        self.resize(1400, 850)
+        self.resize(1400, 950)
+        print(self.screen().availableGeometry())
 
         # ------------------------------------------------------------------
         # Toolbar (New / Save / Import)
@@ -216,9 +217,20 @@ class ConfigurationTool(QMainWindow):
         self.imported_list.setUniformItemSizes(True)
         self.imported_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.imported_list.setSpacing(4)
-        self.imported_list.setMinimumHeight(180)
-        self.imported_list.setMaximumHeight(220)
+        self.imported_list.setMinimumHeight(110)
+        self.imported_list.setMaximumHeight(150)
         self.imported_list.itemClicked.connect(self.on_imported_file_clicked)
+        self.imported_list.itemClicked.connect(self.on_imported_file_clicked)
+
+        # "New file" row support
+        self._pending_new_item = None
+        self._work_dir = None
+        self._imported_delegate = self.imported_list.itemDelegate()
+        self._imported_delegate.closeEditor.connect(
+            self._on_new_file_editor_closed
+        )
+
+        imported_layout.addWidget(self.imported_list)
         imported_layout.addWidget(self.imported_list)
 
         # New / Save / Import buttons under the list
@@ -409,7 +421,7 @@ class ConfigurationTool(QMainWindow):
             QSizePolicy.Expanding,
             QSizePolicy.Expanding
         )
-       
+        self.content_panel.setMaximumHeight(500)
         content_layout = QVBoxLayout(self.content_panel)
         content_layout.setContentsMargins(12, 10, 12, 10)
 
@@ -687,11 +699,108 @@ class ConfigurationTool(QMainWindow):
         if self._read_json(path):
             self.statusBar().showMessage(f"Loaded: {path}", 3000)
             self._show_device_tree()
+
+    # ------------------------------------------------------------------
+    # New file row (like "New File" in VS Code)
+    # ------------------------------------------------------------------
+    def _get_new_file_folder(self):
+        """Folder where new files are created. Asks once, then remembers."""
+        if self._work_dir and os.path.isdir(self._work_dir):
+            return self._work_dir
+
+        if self.current_file_path:
+            folder = os.path.dirname(self.current_file_path)
+        elif self.imported_files:
+            folder = os.path.dirname(self.imported_files[-1])
+        else:
+            folder = QFileDialog.getExistingDirectory(
+                self, "Choose a folder for new JSON files"
+            )
+
+        if folder and os.path.isdir(folder):
+            self._work_dir = folder
+            return folder
+        return None
+
+    def _start_new_file_row(self):
+        # Already typing a name? Just put the cursor back there.
+        if self._pending_new_item is not None:
+            self.imported_list.editItem(self._pending_new_item)
+            return
+
+        item = QListWidgetItem("")
+        item.setFlags(item.flags() | Qt.ItemIsEditable)
+        self.imported_list.addItem(item)
+        self.imported_list.setCurrentItem(item)
+        self.imported_list.scrollToItem(item)
+        self._pending_new_item = item
+        self.imported_list.setFocus()
+        self.imported_list.editItem(item)
+
+    def _on_new_file_editor_closed(self, editor, hint):
+        item = self._pending_new_item
+        if item is None:
+            return
+        name = item.text().strip()
+        self._pending_new_item = None
+        # Deferred: the editor is still closing at this moment
+        QTimer.singleShot(0, lambda: self._finish_new_file(item, name))
+
+    def _finish_new_file(self, item, name):
+        def discard():
+            row = self.imported_list.row(item)
+            if row >= 0:
+                self.imported_list.takeItem(row)
+
+        if not name:                      # Esc or empty name
+            discard()
+            return
+
+        if any(ch in name for ch in '<>:"/\\|?*'):
+            QMessageBox.warning(
+                self, "Invalid name",
+                'A file name cannot contain any of these characters:\n'
+                '< > : " / \\ | ? *'
+            )
+            discard()
+            return
+
+        if not name.lower().endswith(".json"):
+            name += ".json"
+
+        path = os.path.normpath(os.path.join(self._work_dir, name))
+        if os.path.exists(path):
+            QMessageBox.warning(
+                self, "File exists",
+                f"{name} already exists in this folder."
+            )
+            discard()
+            return
+
+        if not self._write_json(path):    # shows its own error message
+            discard()
+            return
+
+        # Turn the blank row into a normal imported-file row
+        self.imported_files.append(path)
+        item.setText("•  " + name)
+        item.setData(Qt.UserRole, path)
+        item.setToolTip(path)
+        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        self.imported_list.setCurrentItem(item)
+
+        self.current_file_path = path     # Ctrl+S now saves into this file
+        self._update_title()
+        self.statusBar().showMessage(f"Created: {path}", 3000)
     # ------------------------------------------------------------------
     # Toolbar actions
     # ------------------------------------------------------------------
 
     def on_new(self):
+        # NEW: need a folder to create the file in (asks only the first time)
+        if not self._get_new_file_folder():
+            return
+
         self.classic_can_settings = (
           self.controller.get_classic_can()
        )
@@ -704,6 +813,8 @@ class ConfigurationTool(QMainWindow):
         self.log_pages.apply(default_log_config())
         self.imported_list.clearSelection()
 
+        # NEW: show the empty "type a file name" row
+        self._start_new_file_row()
     def on_open(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "Open configuration", "", PROJECT_FILTER
@@ -1034,6 +1145,14 @@ class ConfigurationTool(QMainWindow):
             QListWidget::item:selected {{
                 background-color: {c['accent_blue']};
                 color: #FFFFFF;
+            }}
+            QListWidget QLineEdit {{
+                background-color: {c['bg_main']};
+                color: {c['text_primary']};
+                border: 1px solid {c['accent_blue']};
+                border-radius: 6px;
+                padding: 4px 8px;
+                font-size: 11pt;
             }}
             """
         )

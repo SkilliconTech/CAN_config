@@ -217,7 +217,7 @@ def main():
 
     window = ConfigurationTool()
 
-    window.show()
+    window.showMaximized()
 
     sys.exit(app.exec())
 

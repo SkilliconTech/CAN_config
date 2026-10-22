@@ -223,8 +223,10 @@ class ConfigurationTool(QMainWindow):
         self.imported_list.itemClicked.connect(self.on_imported_file_clicked)
 
         # "New file" row support
-        self._pending_new_item = None
-        self._work_dir = None
+        self._pending_new_item = None   # blank row while the name is typed
+        self._draft_item = None         # named row, not saved to disk yet
+        self._draft_name = None
+        self._last_folder = ""          # remembered after the first save
         self._imported_delegate = self.imported_list.itemDelegate()
         self._imported_delegate.closeEditor.connect(
             self._on_new_file_editor_closed
@@ -630,6 +632,7 @@ class ConfigurationTool(QMainWindow):
             data = self.controller.load_configuration(path)
 
             self._apply_config(data)
+            self._discard_draft()
 
             return True
 
@@ -703,25 +706,6 @@ class ConfigurationTool(QMainWindow):
     # ------------------------------------------------------------------
     # New file row (like "New File" in VS Code)
     # ------------------------------------------------------------------
-    def _get_new_file_folder(self):
-        """Folder where new files are created. Asks once, then remembers."""
-        if self._work_dir and os.path.isdir(self._work_dir):
-            return self._work_dir
-
-        if self.current_file_path:
-            folder = os.path.dirname(self.current_file_path)
-        elif self.imported_files:
-            folder = os.path.dirname(self.imported_files[-1])
-        else:
-            folder = QFileDialog.getExistingDirectory(
-                self, "Choose a folder for new JSON files"
-            )
-
-        if folder and os.path.isdir(folder):
-            self._work_dir = folder
-            return folder
-        return None
-
     def _start_new_file_row(self):
         # Already typing a name? Just put the cursor back there.
         if self._pending_new_item is not None:
@@ -768,38 +752,86 @@ class ConfigurationTool(QMainWindow):
         if not name.lower().endswith(".json"):
             name += ".json"
 
-        path = os.path.normpath(os.path.join(self._work_dir, name))
-        if os.path.exists(path):
+        # name already used by another row in the list?
+        for i in range(self.imported_list.count()):
+            other = self.imported_list.item(i)
+            if other is not item and \
+               other.text().lstrip("• ").strip().lower() == name.lower():
+                QMessageBox.warning(
+                    self, "Name already used",
+                    f"{name} is already in the list."
+                )
+                discard()
+                return
+
+        # Keep it as a draft: nothing is written to disk until Save
+        item.setText("•  " + name)
+        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        item.setToolTip("Not saved yet - click Save to choose a folder")
+        self._draft_item = item
+        self._draft_name = name
+        self.imported_list.setCurrentItem(item)
+        self.statusBar().showMessage(
+            f"{name} created - click Save to choose where to store it", 6000
+        )
+
+    def _discard_draft(self):
+        item = self._draft_item
+        self._draft_item = None
+        self._draft_name = None
+        if item is not None:
+            row = self.imported_list.row(item)
+            if row >= 0:
+                self.imported_list.takeItem(row)
+
+    def _save_draft(self):
+        """First Save of a file created with New: ask for the folder."""
+        start = (
+            os.path.join(self._last_folder, self._draft_name)
+            if self._last_folder else self._draft_name
+        )
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save new file", start, JSON_FILTER
+        )
+        if not path:
+            return
+
+        if not os.path.splitext(path)[1]:
+            path += ".json"
+        path = os.path.normpath(os.path.abspath(path))
+
+        if path in self.imported_files:
             QMessageBox.warning(
-                self, "File exists",
-                f"{name} already exists in this folder."
+                self, "Already in list",
+                "That file is already in the imported files list.\n"
+                "Please choose a different name."
             )
-            discard()
             return
 
         if not self._write_json(path):    # shows its own error message
-            discard()
             return
 
-        # Turn the blank row into a normal imported-file row
+        item = self._draft_item
         self.imported_files.append(path)
-        item.setText("•  " + name)
+        item.setText("•  " + os.path.basename(path))
         item.setData(Qt.UserRole, path)
         item.setToolTip(path)
-        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-        self.imported_list.setCurrentItem(item)
+        self._draft_item = None
+        self._draft_name = None
+        self._last_folder = os.path.dirname(path)
 
-        self.current_file_path = path     # Ctrl+S now saves into this file
+        self.current_file_path = path     # later saves go to this file
         self._update_title()
-        self.statusBar().showMessage(f"Created: {path}", 3000)
+        self.imported_list.setCurrentItem(item)
+        self.statusBar().showMessage(f"Saved: {path}", 3000)
+
+  
     # ------------------------------------------------------------------
     # Toolbar actions
     # ------------------------------------------------------------------
 
     def on_new(self):
-        # NEW: need a folder to create the file in (asks only the first time)
-        if not self._get_new_file_folder():
-            return
+        self._discard_draft()   # drop an earlier unsaved draft, if any
 
         self.classic_can_settings = (
           self.controller.get_classic_can()
@@ -813,7 +845,7 @@ class ConfigurationTool(QMainWindow):
         self.log_pages.apply(default_log_config())
         self.imported_list.clearSelection()
 
-        # NEW: show the empty "type a file name" row
+        # show the empty "type a file name" row
         self._start_new_file_row()
     def on_open(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -829,6 +861,11 @@ class ConfigurationTool(QMainWindow):
             self.statusBar().showMessage(f"Opened: {path}", 3000)
 
     def on_save(self):
+        # file created with New but not saved yet -> ask for the folder
+        if self.current_file_path is None and self._draft_item is not None:
+            self._save_draft()
+            return
+        
         # First time: no path yet, so ask for it. After that: save silently.
         if self.current_file_path is None:
             self.on_save_as()
@@ -840,6 +877,10 @@ class ConfigurationTool(QMainWindow):
             )
 
     def on_save_as(self):
+        if self.current_file_path is None and self._draft_item is not None:
+            self._save_draft()
+            return
+
         start = self.current_file_path or ("config" + PROJECT_EXT)
         path, _ = QFileDialog.getSaveFileName(
             self, "Save As", start, PROJECT_FILTER
@@ -1150,9 +1191,11 @@ class ConfigurationTool(QMainWindow):
                 background-color: {c['bg_main']};
                 color: {c['text_primary']};
                 border: 1px solid {c['accent_blue']};
-                border-radius: 6px;
-                padding: 4px 8px;
+                border-radius: {RADIUS_SM}px;
+                padding: 0px 12px;
                 font-size: 11pt;
+                selection-background-color: {c['accent_blue']};
+                selection-color: #FFFFFF;
             }}
             """
         )

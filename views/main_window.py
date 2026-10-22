@@ -109,7 +109,7 @@ class ConfigurationTool(QMainWindow):
         self.current_file_path = None      # file used by Save / Ctrl+S
         # Classic CAN runtime configuration/state
         self.classic_can_settings = {
-            "bitrate": "50.000 kbits/s",
+            "bitrate": "100.000 kbits/s",
             "sampling_point": "75%",
             "sjw": "1",
             "enabled": False,

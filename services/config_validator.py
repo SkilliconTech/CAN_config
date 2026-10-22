@@ -115,8 +115,8 @@ def validate_log_config(data):
             and all(isinstance(f, str) and f in ("asc", "mf4") for f in formats),
             "Select ASC and/or MF4")
     require(len(set(formats)) == len(formats), "Duplicate output format")
-    check_int(log["file_split_size_bytes"], 1048576, 2146435072, "File size limit")
-    check_int(log["file_split_time_seconds"], 0, 604800, "File time limit")
+    check_int(log["file_split_size_bytes"], 1048576, 104857600, "File size limit")
+    check_int(log["file_split_time_seconds"], 0, 3600, "File time limit")
     require(log["split_policy"] == "first_limit_reached", "Invalid split policy")
     require(log["on_sd_full"] == log["on_write_error"] == "stop",
             "Storage errors must stop logging")

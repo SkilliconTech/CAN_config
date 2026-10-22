@@ -131,7 +131,7 @@ class ConfigurationTool(QMainWindow):
         self.resize(1400, 850)
 
         # ------------------------------------------------------------------
-        # Toolbar (New / Open / Save / Import / Export)
+        # Toolbar (New / Save / Import)
         # ------------------------------------------------------------------
         self._create_toolbar()
 
@@ -450,7 +450,7 @@ class ConfigurationTool(QMainWindow):
         self.toolbar.setMovable(False)
         self.toolbar.setFloatable(False)
         self.toolbar.setIconSize(QSize(18, 18))
-        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextOnly)
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
 
         self.act_new = QAction("New", self)
@@ -486,57 +486,69 @@ class ConfigurationTool(QMainWindow):
         save_menu.addAction(self.act_save_as)
 
         self.save_button = QToolButton()
+        self.save_button.setObjectName("saveButton")
         self.save_button.setDefaultAction(self.act_save)
         self.save_button.setMenu(save_menu)
         self.save_button.setPopupMode(QToolButton.MenuButtonPopup)
-        self.save_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self.save_button.setIconSize(QSize(18, 18))
 
-        self.toolbar.addAction(self.act_new)
-        self.toolbar.addWidget(self.save_button)
-        self.toolbar.addAction(self.act_import)
+        self.new_button = QToolButton()
+        self.new_button.setObjectName("newButton")
+        self.new_button.setDefaultAction(self.act_new)
+
+        self.import_button = QToolButton()
+        self.import_button.setObjectName("importButton")
+        self.import_button.setDefaultAction(self.act_import)
+
+        for button in (self.new_button, self.save_button, self.import_button):
+            button.setToolButtonStyle(Qt.ToolButtonTextOnly)
+            button.setCursor(Qt.PointingHandCursor)
+            button.setMinimumHeight(38)
+            self.toolbar.addWidget(button)
         
 
     def _refresh_toolbar_theme(self, c):
-        for action, name in (
-            (self.act_new, "new"),
-            (self.act_save, "save"),
-            (self.act_import, "open"),
-        ):
-            action.setIcon(tinted_icon(name, c["toggle_icon"]))
-
+        
         self.toolbar.setStyleSheet(
             f"""
             QToolBar {{
                 background-color: {c['bg_panel']};
                 border: none;
                 border-bottom: 1px solid {c['border']};
-                spacing: 2px;
-                padding: 1px 6px;
-            }}
-            QToolBar::separator {{
-                background-color: {c['border']};
-                width: 1px;
-                margin: 4px 4px;
+                spacing: 10px;
+                padding: 8px 12px;
             }}
             QToolButton {{
                 color: {c['text_primary']};
-                background-color: transparent;
-                border: 1px solid transparent;
-                border-radius: {RADIUS_SM}px;
-                padding: 2px 8px;
-                font-size: 9pt;
+                background-color: {c['btn_bg']};
+                border: 1px solid {c['btn_border']};
+                border-radius: {RADIUS_SM + 2}px;
+                padding: 8px 22px;
+                font-size: 10.5pt;
+                font-weight: 600;
             }}
             QToolButton:hover {{
                 border: 1px solid {c['accent_blue']};
             }}
+            QToolButton:pressed {{
+                background-color: {c['border']};
+            }}
+            QToolButton#newButton {{
+                background-color: {c['bg_main']};
+                border: 1px solid {c['border']};
+                font-weight: 400;
+            }}
+            QToolButton#newButton:hover {{
+                border: 1px solid {c['accent_blue']};
+            }}
+            QToolButton#saveButton {{
+                padding-right: 34px;
+            }}
             QToolButton::menu-button {{
                 border: none;
-                width: 12px;
+                width: 24px;
             }}
             """
         )
-
         self.statusBar().setStyleSheet(
             f"QStatusBar {{ background-color: {c['bg_panel']};"
             f" color: {c['text_secondary']}; }}"

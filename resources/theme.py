@@ -6,8 +6,11 @@ LIGHT = {
     "text_secondary": "#6B7280",
     "accent_blue": "#4181EF",
     "toggle_icon": "#1D2631",
-    "btn_bg": "#EEF1F6",
-    "btn_border": "#D5DAE3",
+    "btn_bg": "#EEF1F6",        # LIGHT
+    "btn_border": "#D5DAE3",    # LIGHT
+    "list_bg": "#F8FAFC",       # LIGHT
+    
+    
 }
 
 DARK = {
@@ -18,8 +21,10 @@ DARK = {
     "text_secondary": "#9AA1AE",
     "accent_blue": "#4181EF",
     "toggle_icon": "#EDEFF3",
-    "btn_bg": "#242936",
-    "btn_border": "#343B4A",
+    "btn_bg": "#242936",        # DARK
+    "btn_border": "#343B4A",    # DARK
+    "list_bg": "#181C26",       # DARK
+    
 }
 LOGO_GOLD_1 = "#F2C14E"
 LOGO_GOLD_2 = "#C9922A"

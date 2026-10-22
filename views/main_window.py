@@ -247,17 +247,34 @@ class ConfigurationTool(QMainWindow):
         self.save_button.setObjectName("saveButton")
         self.save_button.clicked.connect(self.on_save)
 
+        # small arrow next to Save -> opens the "Save As..." dropdown
+        self.save_arrow_button = QPushButton("▾")
+        self.save_arrow_button.setObjectName("saveArrowButton")
+        self.save_arrow_button.setFixedWidth(30)
+        self.save_arrow_button.setToolTip("More save options")
+        self.save_arrow_button.clicked.connect(self._show_save_menu)
+
+        self._save_menu = QMenu(self)
+        self._save_menu.addAction(self.act_save_as)
+
         self.import_button = QPushButton("Import")
         self.import_button.setObjectName("importButton")
         self.import_button.clicked.connect(self.on_import)
 
-        for button in (self.new_button, self.save_button, self.import_button):
+        for button in (self.new_button, self.save_button,
+                       self.save_arrow_button, self.import_button):
             button.setCursor(Qt.PointingHandCursor)
             button.setMinimumHeight(40)
-            button_row.addWidget(button)
-            self.new_button.setMinimumHeight(38)
-            self.save_button.setMinimumHeight(38)
-            self.import_button.setMinimumHeight(38)
+
+        # Save + arrow are glued together so they look like one split button
+        save_group = QHBoxLayout()
+        save_group.setSpacing(0)
+        save_group.addWidget(self.save_button, 1)
+        save_group.addWidget(self.save_arrow_button)
+
+        button_row.addWidget(self.new_button)
+        button_row.addLayout(save_group)
+        button_row.addWidget(self.import_button)
 
         imported_layout.addLayout(button_row)
         sidebar_layout.addWidget(self.imported_section, 0)
@@ -877,24 +894,42 @@ class ConfigurationTool(QMainWindow):
             )
 
     def on_save_as(self):
+        # New file that was never saved: same "choose folder" dialog
         if self.current_file_path is None and self._draft_item is not None:
             self._save_draft()
             return
 
-        start = self.current_file_path or ("config" + PROJECT_EXT)
+        # Always ask for the path
+        if self.current_file_path:
+            start = self.current_file_path
+        elif self._last_folder:
+            start = os.path.join(self._last_folder, "config.json")
+        else:
+            start = "config.json"
+
         path, _ = QFileDialog.getSaveFileName(
-            self, "Save As", start, PROJECT_FILTER
+            self, "Save As", start, JSON_FILTER
         )
         if not path:
             return
 
         if not os.path.splitext(path)[1]:
-            path += PROJECT_EXT
+            path += ".json"
+        path = os.path.normpath(os.path.abspath(path))
 
         if self._write_json(path):
             self.current_file_path = path
+            self._last_folder = os.path.dirname(path)
             self._update_title()
+            self._add_imported_file(path)   # shows it in the list
             self.statusBar().showMessage(f"Saved: {path}", 3000)
+
+    def _show_save_menu(self):
+        # open the dropdown just below the Save button
+        pos = self.save_button.mapToGlobal(
+            self.save_button.rect().bottomLeft()
+        )
+        self._save_menu.exec(pos)
 
     def on_import(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -1078,6 +1113,42 @@ class ConfigurationTool(QMainWindow):
                 font-family: "Segoe UI";     /* IMPORT font   */
                 font-size: 9pt;             /* IMPORT size   */
                 font-weight: 700;            /* IMPORT weight */
+            }}
+            QPushButton#saveButton {{
+                padding: 0 8px;
+                border-top-right-radius: 0px;
+                border-bottom-right-radius: 0px;
+            }}
+            QPushButton#saveArrowButton {{
+                padding: 0px;
+                font-size: 11pt;
+                font-weight: 700;
+                border-left: none;
+                border-top-left-radius: 0px;
+                border-bottom-left-radius: 0px;
+            }}
+            QPushButton#saveArrowButton:hover {{
+                border: 1px solid {c['accent_blue']};
+                border-left: none;
+            }}
+            """
+        )
+        self._save_menu.setStyleSheet(
+            f"""
+            QMenu {{
+                background-color: {c['bg_panel']};
+                color: {c['text_primary']};
+                border: 1px solid {c['btn_border']};
+                padding: 6px;
+            }}
+            QMenu::item {{
+                padding: 8px 28px 8px 14px;
+                border-radius: 6px;
+                font-size: 11pt;
+            }}
+            QMenu::item:selected {{
+                background-color: {c['accent_blue']};
+                color: #FFFFFF;
             }}
             """
         )

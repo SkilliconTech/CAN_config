@@ -973,6 +973,26 @@ class ConfigurationTool(QMainWindow):
             }}
             """
         )
+        # Skillicon brand – deep yellow
+        self.skillicon_btn.setStyleSheet(f"""
+        #skilliconBrand {{
+        background-color: transparent;
+        color: #E6B800;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 8px;
+        letter-spacing: 0.3px;
+        font-weight: 600;
+      }}
+        #skilliconBrand:hover {{
+        background-color: #E6B800;
+        color: #1A1A1A;
+      }}
+        #skilliconBrand:pressed {{
+        background-color: #C99A00;
+        color: #1A1A1A;
+       }}
+     """)
 
         self.theme_toggle.setIcon(
             make_theme_icon(

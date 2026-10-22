@@ -79,7 +79,7 @@ class ModernTreeDelegate(QStyledItemDelegate):
         is_top_level = not index.parent().isValid()
 
         # Chevron: expand/collapse for parents; right arrow for top-level leaves
-        show_arrow = has_children or is_top_level
+        show_arrow = has_children
         if show_arrow:
             pen = QPen(QColor(c["text_secondary"]))
             pen.setWidthF(1.6)

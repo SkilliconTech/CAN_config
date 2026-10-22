@@ -870,7 +870,7 @@ class ConfigurationTool(QMainWindow):
 
         # Section titles — primary + bold (only once)
         self.imported_label.setStyleSheet(
-            f"color: {c['text_primary']}; font-weight: 600;"
+            f"color: {c['text_secondary']}; font-size: 9pt; font-weight: 700;"
         )
         self.config_label.setStyleSheet(
             f"color: {c['text_primary']}; font-weight: 600;"
@@ -883,7 +883,35 @@ class ConfigurationTool(QMainWindow):
             border-radius: {RADIUS_LG}px;
         """
         self.imported_section.setStyleSheet(
-            f"#importedSection {{ {section_style} }}"
+            f"""
+            #importedSection {{
+                background: transparent;
+                border: none;
+            }}
+            QPushButton {{
+                color: {c['text_primary']};
+                background-color: {c['btn_bg']};
+                border: 1px solid {c['btn_border']};
+                border-radius: 12px;
+                padding: 0 14px;
+                font-size: 11pt;
+                font-weight: 700;
+            }}
+            QPushButton:hover {{
+                border: 1px solid {c['accent_blue']};
+            }}
+            QPushButton:pressed {{
+                background-color: {c['border']};
+            }}
+            QPushButton#newButton {{
+                background-color: {c['bg_main']};
+                border: 1px solid {c['border']};
+                font-weight: 400;
+            }}
+            QPushButton#newButton:hover {{
+                border: 1px solid {c['accent_blue']};
+            }}
+            """
         )
         self.config_section.setStyleSheet(
             f"#configSection {{ {section_style} }}"
@@ -971,10 +999,11 @@ class ConfigurationTool(QMainWindow):
         self.imported_list.setStyleSheet(
             f"""
             QListWidget {{
-                background-color: transparent;
-                border: none;
+                background-color: {c['list_bg']};
+                border: 1px solid {c['btn_border']};
+                border-radius: {RADIUS_LG}px;
                 outline: 0;
-                padding: 4px;
+                padding: 6px;
                 font-size: 11pt;
             }}
             QListWidget::item {{

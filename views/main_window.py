@@ -241,6 +241,9 @@ class ConfigurationTool(QMainWindow):
             button.setCursor(Qt.PointingHandCursor)
             button.setMinimumHeight(40)
             button_row.addWidget(button)
+            self.new_button.setMinimumHeight(38)
+            self.save_button.setMinimumHeight(38)
+            self.import_button.setMinimumHeight(38)
 
         imported_layout.addLayout(button_row)
         sidebar_layout.addWidget(self.imported_section, 0)
@@ -894,8 +897,6 @@ class ConfigurationTool(QMainWindow):
                 border: 1px solid {c['btn_border']};
                 border-radius: 12px;
                 padding: 0 14px;
-                font-size: 11pt;
-                font-weight: 700;
             }}
             QPushButton:hover {{
                 border: 1px solid {c['accent_blue']};
@@ -903,13 +904,28 @@ class ConfigurationTool(QMainWindow):
             QPushButton:pressed {{
                 background-color: {c['border']};
             }}
+
             QPushButton#newButton {{
                 background-color: {c['bg_main']};
                 border: 1px solid {c['border']};
-                font-weight: 400;
+                font-family: "Segoe UI";     /* NEW font   */
+                font-size: 10pt;             /* NEW size   */
+                font-weight: 400;            /* NEW weight */
             }}
             QPushButton#newButton:hover {{
                 border: 1px solid {c['accent_blue']};
+            }}
+
+            QPushButton#saveButton {{
+                font-family: "Segoe UI";     /* SAVE font   */
+                font-size: 9pt;             /* SAVE size   */
+                font-weight: 700;            /* SAVE weight */
+            }}
+
+            QPushButton#importButton {{
+                font-family: "Segoe UI";     /* IMPORT font   */
+                font-size: 9pt;             /* IMPORT size   */
+                font-weight: 700;            /* IMPORT weight */
             }}
             """
         )

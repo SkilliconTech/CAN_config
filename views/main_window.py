@@ -945,55 +945,33 @@ class ConfigurationTool(QMainWindow):
         if item is None or item is self._pending_new_item:
             return
 
-        path = item.data(Qt.UserRole)
-
-        # Draft created with New but never saved: nothing on disk, just remove the row
-        if not path:
-            if item is self._draft_item:
-                self._discard_draft()
+        # Draft created with New but never saved: just remove the row
+        if item is self._draft_item:
+            self._discard_draft()
             return
 
-        name = os.path.basename(path)
+        path = item.data(Qt.UserRole)
+        name = os.path.basename(path) if path else item.text()
+
+        # Ask first
         answer = QMessageBox.question(
-            self, "Delete file",
-            f"Delete '{name}'?\n\nThe file will be moved to the Recycle Bin.",
+            self, "Remove file",
+            f"Remove '{name}' from the list?\n\n",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
         if answer != QMessageBox.Yes:
             return
 
-        if os.path.exists(path):
-            if not QFile.moveToTrash(path):
-                again = QMessageBox.question(
-                    self, "Recycle Bin not available",
-                    "Could not move the file to the Recycle Bin.\n"
-                    "Delete it permanently?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
-                )
-                if again != QMessageBox.Yes:
-                    return
-                try:
-                    os.remove(path)
-                except OSError as exc:
-                    QMessageBox.warning(self, "Delete failed", str(exc))
-                    return
-
+        # Remove from the list only. The file on disk is NOT touched.
         row = self.imported_list.row(item)
         if row >= 0:
             self.imported_list.takeItem(row)
         if path in self.imported_files:
             self.imported_files.remove(path)
 
-        # If it was the file currently open, the next Save will ask for a path
-        if self.current_file_path == path:
-            self.current_file_path = None
-            self._update_title()
+        self.statusBar().showMessage(f"Removed from list: {name}", 3000)
 
-        self.statusBar().showMessage(f"Deleted: {name}", 3000)
-
-        
     def _show_save_menu(self):
         # open the dropdown just below the Save button
         pos = self.save_button.mapToGlobal(

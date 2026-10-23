@@ -372,13 +372,13 @@ class ConfigurationTool(QMainWindow):
         self.help_button = QPushButton("?")
         self.help_button.setObjectName("helpButton")
         self.help_button.setFixedSize(42, 42)
-        self.help_button.setFont(QFont(FONT_FAMILY, 13, QFont.Bold))
+        self.help_button.setFont(QFont(FONT_FAMILY, 16, QFont.Bold))
         self.help_button.setCursor(Qt.PointingHandCursor)
         self.help_button.setToolTip("Help")
         self.help_button.clicked.connect(self.on_help)
 
         topbar.addWidget(self.help_button)
-        topbar.addSpacing(8)
+        topbar.addSpacing(3)
 
         # 2) Theme button
         self.theme_toggle = QPushButton()
@@ -389,7 +389,7 @@ class ConfigurationTool(QMainWindow):
         self.theme_toggle.clicked.connect(self.toggle_theme)
 
         topbar.addWidget(self.theme_toggle)
-        topbar.addSpacing(16)
+        topbar.addSpacing(4)
 
         # 3) Skillicon logo (far right)
         self.skillicon_btn = QPushButton()

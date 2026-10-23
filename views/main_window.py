@@ -70,6 +70,7 @@ from resources.icons import (
 )
 
 from resources.logo_widget import LogoWidget
+from resources.skillicon_logo_data import skillicon_logo_icon
 
 from views.classic_can_dialog import ClassicCANSettingsDialog
 from views.canfd_dialog import CANFDSettingsDialog

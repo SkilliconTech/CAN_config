@@ -9,7 +9,9 @@ from PySide6.QtGui import (
     QIcon,
     QColor,
     QAction,
-    QDesktopServices
+    QDesktopServices,
+    QShortcut,
+    QKeySequence
 )
 
 from PySide6.QtWidgets import (
@@ -254,6 +256,12 @@ class ConfigurationTool(QMainWindow):
         self._imported_delegate.closeEditor.connect(
             self._on_new_file_editor_closed
         )
+        # Delete key on the imported files list
+        self._delete_shortcut = QShortcut(
+            QKeySequence("Delete"), self.imported_list
+        )
+        self._delete_shortcut.setContext(Qt.WidgetShortcut)
+        self._delete_shortcut.activated.connect(self.on_delete_selected_file)
 
         imported_layout.addWidget(self.imported_list)
         imported_layout.addWidget(self.imported_list)
@@ -932,6 +940,60 @@ class ConfigurationTool(QMainWindow):
             self._add_imported_file(path)   # shows it in the list
             self.statusBar().showMessage(f"Saved: {path}", 3000)
 
+    def on_delete_selected_file(self):
+        item = self.imported_list.currentItem()
+        if item is None or item is self._pending_new_item:
+            return
+
+        path = item.data(Qt.UserRole)
+
+        # Draft created with New but never saved: nothing on disk, just remove the row
+        if not path:
+            if item is self._draft_item:
+                self._discard_draft()
+            return
+
+        name = os.path.basename(path)
+        answer = QMessageBox.question(
+            self, "Delete file",
+            f"Delete '{name}'?\n\nThe file will be moved to the Recycle Bin.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if answer != QMessageBox.Yes:
+            return
+
+        if os.path.exists(path):
+            if not QFile.moveToTrash(path):
+                again = QMessageBox.question(
+                    self, "Recycle Bin not available",
+                    "Could not move the file to the Recycle Bin.\n"
+                    "Delete it permanently?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                if again != QMessageBox.Yes:
+                    return
+                try:
+                    os.remove(path)
+                except OSError as exc:
+                    QMessageBox.warning(self, "Delete failed", str(exc))
+                    return
+
+        row = self.imported_list.row(item)
+        if row >= 0:
+            self.imported_list.takeItem(row)
+        if path in self.imported_files:
+            self.imported_files.remove(path)
+
+        # If it was the file currently open, the next Save will ask for a path
+        if self.current_file_path == path:
+            self.current_file_path = None
+            self._update_title()
+
+        self.statusBar().showMessage(f"Deleted: {name}", 3000)
+
+        
     def _show_save_menu(self):
         # open the dropdown just below the Save button
         pos = self.save_button.mapToGlobal(

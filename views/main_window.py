@@ -296,9 +296,9 @@ class ConfigurationTool(QMainWindow):
         save_group.addWidget(self.save_arrow_button)
 
         button_row.addWidget(self.new_button)
-        button_row.addLayout(save_group)
         button_row.addWidget(self.import_button)
-
+        button_row.addLayout(save_group)
+        
         imported_layout.addLayout(button_row)
         sidebar_layout.addWidget(self.imported_section, 0)
         sidebar_layout.addSpacing(12)

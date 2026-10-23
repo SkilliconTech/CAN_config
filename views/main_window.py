@@ -2,7 +2,7 @@ import os
 import json
 import copy
 
-from PySide6.QtCore import Qt, QSize, QUrl, QTimer
+from PySide6.QtCore import Qt, QSize, QUrl, QTimer,QFile
 
 from PySide6.QtGui import (
     QFont,
@@ -88,7 +88,7 @@ class NewFileDelegate(QStyledItemDelegate):
     """Controls the row height of the imported files list
     and the size of the 'new file' typing box."""
 
-    ROW_HEIGHT = 34      # <-- thickness of the blue band. Change this number.
+    ROW_HEIGHT = 35    # <-- thickness of the blue band. Change this number.
 
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
@@ -298,7 +298,7 @@ class ConfigurationTool(QMainWindow):
         button_row.addWidget(self.new_button)
         button_row.addWidget(self.import_button)
         button_row.addLayout(save_group)
-        
+
         imported_layout.addLayout(button_row)
         sidebar_layout.addWidget(self.imported_section, 0)
         sidebar_layout.addSpacing(12)

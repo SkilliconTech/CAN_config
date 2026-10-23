@@ -95,7 +95,7 @@ class NewFileDelegate(QStyledItemDelegate):
     selected row of the imported files list."""
 
     ROW_HEIGHT = 34          # thickness of the blue band
-    ICON_SIZE = 14           # trash icon size
+    ICON_SIZE = 16           # trash icon size
     ICON_RIGHT_GAP = 14      # distance of the icon from the right edge
 
     def sizeHint(self, option, index):

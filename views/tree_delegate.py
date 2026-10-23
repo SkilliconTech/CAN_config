@@ -14,8 +14,8 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QAbstractItemView, QHeaderView, QDialogButtonBox,
     QPlainTextEdit, QStackedWidget,QListWidget,QListWidgetItem
 )
-from resources.theme import RADIUS_SM
-from cc import LIGHT
+from resources.theme import LIGHT, RADIUS_SM
+
 
 class ModernTreeDelegate(QStyledItemDelegate):
     ROW_HEIGHT = 34

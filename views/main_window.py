@@ -91,10 +91,12 @@ from services.config_repository import JsonConfigurationRepository
 
 
 class NewFileDelegate(QStyledItemDelegate):
-    """Controls the row height of the imported files list
-    and the size of the 'new file' typing box."""
+    """Row height, 'new file' typing box, and the trash icon on the
+    selected row of the imported files list."""
 
-    ROW_HEIGHT = 35    # <-- thickness of the blue band. Change this number.
+    ROW_HEIGHT = 34          # thickness of the blue band
+    ICON_SIZE = 18           # trash icon size
+    ICON_RIGHT_GAP = 14      # distance of the icon from the right edge
 
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
@@ -104,6 +106,23 @@ class NewFileDelegate(QStyledItemDelegate):
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect.adjusted(2, 3, -60, -3))
 
+    @classmethod
+    def trash_rect(cls, row_rect):
+        s = cls.ICON_SIZE
+        return QRect(
+            row_rect.right() - cls.ICON_RIGHT_GAP - s,
+            row_rect.center().y() - s // 2 + 1,
+            s, s
+        )
+
+    def paint(self, painter, option, index):
+        super().paint(painter, option, index)
+        # icon only on the selected row of a real (saved/imported) file
+        if (option.state & QStyle.State_Selected) and index.data(Qt.UserRole):
+            painter.save()
+            painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            painter.drawPixmap(self.trash_rect(option.rect), trash_pixmap())
+            painter.restore()
 
 class ConfigurationTool(QMainWindow):
     
@@ -266,6 +285,10 @@ class ConfigurationTool(QMainWindow):
         )
         self._delete_shortcut.setContext(Qt.WidgetShortcut)
         self._delete_shortcut.activated.connect(self.on_delete_selected_file)
+        # Click on the trash icon of the selected row
+        self._press_item = None
+        self._press_was_selected = False
+        self.imported_list.viewport().installEventFilter(self)
 
         imported_layout.addWidget(self.imported_list)
         imported_layout.addWidget(self.imported_list)
@@ -944,6 +967,35 @@ class ConfigurationTool(QMainWindow):
             self._add_imported_file(path)   # shows it in the list
             self.statusBar().showMessage(f"Saved: {path}", 3000)
 
+    def eventFilter(self, obj, event):
+        if obj is self.imported_list.viewport():
+            kind = event.type()
+
+            if kind == QEvent.MouseButtonPress and \
+               event.button() == Qt.LeftButton:
+                item = self.imported_list.itemAt(event.position().toPoint())
+                self._press_item = item
+                self._press_was_selected = (
+                    item is not None and item.isSelected()
+                )
+
+            elif kind == QEvent.MouseButtonRelease and \
+                 event.button() == Qt.LeftButton:
+                pos = event.position().toPoint()
+                item = self.imported_list.itemAt(pos)
+                if (item is not None
+                        and item is self._press_item
+                        and self._press_was_selected
+                        and item.data(Qt.UserRole)):
+                    hit = NewFileDelegate.trash_rect(
+                        self.imported_list.visualItemRect(item)
+                    ).adjusted(-6, -6, 6, 6)
+                    if hit.contains(pos):
+                        self.imported_list.setCurrentItem(item)
+                        QTimer.singleShot(0, self.on_delete_selected_file)
+                        return True
+        return super().eventFilter(obj, event)
+    
     def on_delete_selected_file(self):
         item = self.imported_list.currentItem()
         if item is None or item is self._pending_new_item:
@@ -1296,7 +1348,7 @@ class ConfigurationTool(QMainWindow):
             QListWidget::item {{
                 color: {c['text_primary']};
                 border-radius: 5px;
-                padding: 0px 12px;
+                padding: 0px 40px 0px 12px;
             }}
             QListWidget::item:hover {{
                 background-color: {c['border']};

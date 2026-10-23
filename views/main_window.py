@@ -2,7 +2,7 @@ import os
 import json
 import copy
 
-from PySide6.QtCore import Qt, QSize, QUrl, QTimer,QFile
+from PySide6.QtCore import Qt, QSize, QUrl, QTimer,QFile,QEvent, QRect
 
 from PySide6.QtGui import (
     QFont,
@@ -11,7 +11,8 @@ from PySide6.QtGui import (
     QAction,
     QDesktopServices,
     QShortcut,
-    QKeySequence
+    QKeySequence,
+    QPainter
 )
 
 from PySide6.QtWidgets import (
@@ -37,10 +38,12 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QStackedWidget,
     QSizePolicy,
-    QStyledItemDelegate
-
-    
+    QStyledItemDelegate,
+        QSizePolicy,
+    QStyledItemDelegate,
+    QStyle
 )
+
 
 from models.constants import (
     DEFAULT_CLASSIC_CAN,
@@ -77,6 +80,7 @@ from resources.icons import (
 
 from resources.logo_widget import LogoWidget
 from resources.skillicon_logo_data import skillicon_logo_icon
+from resources.trash_icon_data import trash_pixmap
 
 from views.classic_can_dialog import ClassicCANSettingsDialog
 from views.canfd_dialog import CANFDSettingsDialog

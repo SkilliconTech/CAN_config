@@ -83,6 +83,16 @@ from views.tree_delegate import ModernTreeDelegate
 from app.controller import AppController
 from services.config_repository import JsonConfigurationRepository
 
+
+class NewFileDelegate(QStyledItemDelegate):
+    """Makes the 'new file' typing box smaller than the full row."""
+
+    def updateEditorGeometry(self, editor, option, index):
+        # adjusted(left, top, right, bottom): positive = move in,
+        # negative = pull in from the right/bottom edge
+        editor.setGeometry(option.rect.adjusted(2, 3, -60, -20))
+
+
 class ConfigurationTool(QMainWindow):
     
     @property
@@ -232,7 +242,9 @@ class ConfigurationTool(QMainWindow):
         self._draft_item = None         # named row, not saved to disk yet
         self._draft_name = None
         self._last_folder = ""          # remembered after the first save
-        self._imported_delegate = self.imported_list.itemDelegate()
+        self._imported_delegate = NewFileDelegate(self.imported_list)
+        self.imported_list.setItemDelegate(self._imported_delegate)
+
         self._imported_delegate.closeEditor.connect(
             self._on_new_file_editor_closed
         )
@@ -722,6 +734,7 @@ class ConfigurationTool(QMainWindow):
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         self.imported_list.addItem(item)
         self.imported_list.setCurrentItem(item)
+        self.imported_list.clearSelection()
         self.imported_list.scrollToItem(item)
         self._pending_new_item = item
         self.imported_list.setFocus()
@@ -1246,10 +1259,10 @@ class ConfigurationTool(QMainWindow):
             QListWidget QLineEdit {{
                 background-color: {c['bg_main']};
                 color: {c['text_primary']};
-                border: 1px solid {c['accent_blue']};
+                border: 1px solid {c['btn_border']};
                 border-radius: {RADIUS_SM}px;
-                padding: 0px 12px;
-                font-size: 11pt;
+                padding: 0px 10px;
+                font-size: 10.5pt;
                 selection-background-color: {c['accent_blue']};
                 selection-color: #FFFFFF;
             }}

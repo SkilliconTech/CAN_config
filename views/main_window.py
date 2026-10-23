@@ -367,7 +367,31 @@ class ConfigurationTool(QMainWindow):
         )
 
         topbar.addStretch(1)
-        # ---- Skillicon Technologies brand (top-right) ----
+
+        # 1) Help button
+        self.help_button = QPushButton("?")
+        self.help_button.setObjectName("helpButton")
+        self.help_button.setFixedSize(42, 42)
+        self.help_button.setFont(QFont(FONT_FAMILY, 13, QFont.Bold))
+        self.help_button.setCursor(Qt.PointingHandCursor)
+        self.help_button.setToolTip("Help")
+        self.help_button.clicked.connect(self.on_help)
+
+        topbar.addWidget(self.help_button)
+        topbar.addSpacing(8)
+
+        # 2) Theme button
+        self.theme_toggle = QPushButton()
+        self.theme_toggle.setObjectName("themeToggle")
+        self.theme_toggle.setFixedSize(42, 42)
+        self.theme_toggle.setCursor(Qt.PointingHandCursor)
+        self.theme_toggle.setIconSize(QSize(18, 18))
+        self.theme_toggle.clicked.connect(self.toggle_theme)
+
+        topbar.addWidget(self.theme_toggle)
+        topbar.addSpacing(16)
+
+        # 3) Skillicon logo (far right)
         self.skillicon_btn = QPushButton()
         self.skillicon_btn.setObjectName("skilliconBrand")
         self.skillicon_btn.setCursor(Qt.PointingHandCursor)
@@ -382,43 +406,6 @@ class ConfigurationTool(QMainWindow):
         )
 
         topbar.addWidget(self.skillicon_btn)
-        topbar.addSpacing(16)   # nice gap before Help / theme buttons                   
-        # Help button (left of the theme button)
-        self.help_button = QPushButton("?")
-        self.help_button.setObjectName("helpButton")
-        self.help_button.setFixedSize(42, 42)
-        self.help_button.setFont(QFont(FONT_FAMILY, 16, QFont.Bold))
-        self.help_button.setCursor(Qt.PointingHandCursor)
-        self.help_button.setToolTip("Help")
-        self.help_button.clicked.connect(self.on_help)
-
-        topbar.addWidget(self.help_button)
-        topbar.addSpacing(8)
-        self.theme_toggle = QPushButton()
-        self.theme_toggle.setObjectName(
-            "themeToggle"
-        )
-
-        self.theme_toggle.setFixedSize(
-            42,
-            42
-        )
-
-        self.theme_toggle.setCursor(
-            Qt.PointingHandCursor
-        )
-
-        self.theme_toggle.setIconSize(
-            QSize(18, 18)
-        )
-
-        self.theme_toggle.clicked.connect(
-            self.toggle_theme
-        )
-
-        topbar.addWidget(
-            self.theme_toggle
-        )
 
         main_layout.addLayout(
             topbar
@@ -1198,23 +1185,19 @@ class ConfigurationTool(QMainWindow):
         # Skillicon brand – deep yellow
         self.skillicon_btn.setStyleSheet(f"""
         #skilliconBrand {{
-        background-color: transparent;
-        color: #E6B800;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 8px;
-        letter-spacing: 0.3px;
-        font-weight: 600;
-      }}
+            background-color: transparent;
+            border: none;
+            padding: 6px 12px;
+        }}
         #skilliconBrand:hover {{
-        background-color: #E6B800;
-        color: #1A1A1A;
-      }}
+            background-color: transparent;
+            border: none;
+        }}
         #skilliconBrand:pressed {{
-        background-color: #C99A00;
-        color: #1A1A1A;
-       }}
-     """)
+            background-color: transparent;
+            border: none;
+        }}
+        """)
 
         self.theme_toggle.setIcon(
             make_theme_icon(

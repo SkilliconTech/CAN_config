@@ -85,12 +85,18 @@ from services.config_repository import JsonConfigurationRepository
 
 
 class NewFileDelegate(QStyledItemDelegate):
-    """Makes the 'new file' typing box smaller than the full row."""
+    """Controls the row height of the imported files list
+    and the size of the 'new file' typing box."""
+
+    ROW_HEIGHT = 34      # <-- thickness of the blue band. Change this number.
+
+    def sizeHint(self, option, index):
+        size = super().sizeHint(option, index)
+        size.setHeight(self.ROW_HEIGHT)
+        return size
 
     def updateEditorGeometry(self, editor, option, index):
-        # adjusted(left, top, right, bottom): positive = move in,
-        # negative = pull in from the right/bottom edge
-        editor.setGeometry(option.rect.adjusted(2, 3, -60, -20))
+        editor.setGeometry(option.rect.adjusted(2, 3, -60, -3))
 
 
 class ConfigurationTool(QMainWindow):
@@ -231,7 +237,7 @@ class ConfigurationTool(QMainWindow):
         self.imported_list.setObjectName("importedList")
         self.imported_list.setUniformItemSizes(True)
         self.imported_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.imported_list.setSpacing(4)
+        self.imported_list.setSpacing(0)
         self.imported_list.setMinimumHeight(110)
         self.imported_list.setMaximumHeight(150)
         self.imported_list.itemClicked.connect(self.on_imported_file_clicked)
@@ -1240,14 +1246,13 @@ class ConfigurationTool(QMainWindow):
                 border: 1px solid {c['btn_border']};
                 border-radius: {RADIUS_LG}px;
                 outline: 0;
-                padding: 6px;
+                padding: 3px;
                 font-size: 11pt;
             }}
             QListWidget::item {{
                 color: {c['text_primary']};
-                border-radius: {RADIUS_SM}px;
-                padding: 9px 12px;
-                min-height: 22px;
+                border-radius: 5px;
+                padding: 0px 12px;
             }}
             QListWidget::item:hover {{
                 background-color: {c['border']};
@@ -1260,7 +1265,7 @@ class ConfigurationTool(QMainWindow):
                 background-color: {c['bg_main']};
                 color: {c['text_primary']};
                 border: 1px solid {c['btn_border']};
-                border-radius: {RADIUS_SM}px;
+                border-radius: 5px;
                 padding: 0px 10px;
                 font-size: 10.5pt;
                 selection-background-color: {c['accent_blue']};
@@ -1268,7 +1273,6 @@ class ConfigurationTool(QMainWindow):
             }}
             """
         )
-
         self.new_tree.setStyleSheet(
             f"""
             QTreeWidget {{

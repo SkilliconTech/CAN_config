@@ -32,7 +32,11 @@ from PySide6.QtWidgets import (
     QMenuBar,
     QGraphicsDropShadowEffect,
     QStackedWidget,
-    QSizePolicy
+    QSizePolicy,
+    QStackedWidget,
+    QSizePolicy,
+    QStyledItemDelegate
+
     
 )
 

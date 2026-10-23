@@ -95,9 +95,9 @@ class NewFileDelegate(QStyledItemDelegate):
     selected row of the imported files list."""
 
     ROW_HEIGHT = 34          # thickness of the blue band
-    ICON_SIZE = 16           # trash icon size
+    ICON_SIZE = 15           # trash icon size
     ICON_RIGHT_GAP = 14      # distance of the icon from the right edge
-    trash_path = None        # file whose row currently shows the trash icon
+    
 
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
@@ -118,11 +118,8 @@ class NewFileDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         super().paint(painter, option, index)
-        # trash icon only on the row that was double-clicked
-        path = index.data(Qt.UserRole)
-        if (self.trash_path
-                and path == self.trash_path
-                and (option.state & QStyle.State_Selected)):
+        # icon only on the selected row of a real (saved/imported) file
+        if (option.state & QStyle.State_Selected) and index.data(Qt.UserRole):
             painter.save()
             painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
             painter.drawPixmap(self.trash_rect(option.rect), trash_pixmap())
@@ -289,13 +286,11 @@ class ConfigurationTool(QMainWindow):
         )
         self._delete_shortcut.setContext(Qt.WidgetShortcut)
         self._delete_shortcut.activated.connect(self.on_delete_selected_file)
-        # Trash icon: shown on double-click, clicked to remove from the list
+        # Click on the trash icon of the selected row
         self._press_item = None
-        self._skip_release = False
+        self._press_was_selected = False
         self.imported_list.viewport().installEventFilter(self)
-        self.imported_list.itemSelectionChanged.connect(
-            self._on_list_selection_changed
-        )
+
         imported_layout.addWidget(self.imported_list)
         imported_layout.addWidget(self.imported_list)
 
@@ -973,48 +968,26 @@ class ConfigurationTool(QMainWindow):
             self._add_imported_file(path)   # shows it in the list
             self.statusBar().showMessage(f"Saved: {path}", 3000)
 
-    def _on_list_selection_changed(self):
-        # hide the trash icon as soon as another row (or nothing) is selected
-        selected = self.imported_list.selectedItems()
-        keep = (
-            bool(selected)
-            and selected[0].data(Qt.UserRole)
-            == self._imported_delegate.trash_path
-        )
-        if not keep:
-            self._imported_delegate.trash_path = None
-            self.imported_list.viewport().update()
-
     def eventFilter(self, obj, event):
         if obj is self.imported_list.viewport():
             kind = event.type()
-            left = hasattr(event, "button") and \
-                event.button() == Qt.LeftButton
 
-            if kind == QEvent.MouseButtonPress and left:
-                self._press_item = self.imported_list.itemAt(
-                    event.position().toPoint()
+            if kind == QEvent.MouseButtonPress and \
+               event.button() == Qt.LeftButton:
+                item = self.imported_list.itemAt(event.position().toPoint())
+                self._press_item = item
+                self._press_was_selected = (
+                    item is not None and item.isSelected()
                 )
 
-            elif kind == QEvent.MouseButtonDblClick and left:
-                # double-click on a file: show its trash icon
-                item = self.imported_list.itemAt(event.position().toPoint())
-                if item is not None and item.data(Qt.UserRole):
-                    self._imported_delegate.trash_path = item.data(Qt.UserRole)
-                    self.imported_list.viewport().update()
-                    self._skip_release = True   # ignore the release that follows
-
-            elif kind == QEvent.MouseButtonRelease and left:
-                if self._skip_release:
-                    self._skip_release = False
-                    return False
-
+            elif kind == QEvent.MouseButtonRelease and \
+                 event.button() == Qt.LeftButton:
                 pos = event.position().toPoint()
                 item = self.imported_list.itemAt(pos)
-                path = self._imported_delegate.trash_path
-                if (item is not None and path
+                if (item is not None
                         and item is self._press_item
-                        and item.data(Qt.UserRole) == path):
+                        and self._press_was_selected
+                        and item.data(Qt.UserRole)):
                     hit = NewFileDelegate.trash_rect(
                         self.imported_list.visualItemRect(item)
                     ).adjusted(-6, -6, 6, 6)

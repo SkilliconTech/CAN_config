@@ -368,18 +368,15 @@ class ConfigurationTool(QMainWindow):
 
         topbar.addStretch(1)
         # ---- Skillicon Technologies brand (top-right) ----
-        self.skillicon_btn = QPushButton("Skillicon Technologies")
+        self.skillicon_btn = QPushButton()
         self.skillicon_btn.setObjectName("skilliconBrand")
         self.skillicon_btn.setCursor(Qt.PointingHandCursor)
         self.skillicon_btn.setToolTip("Visit skillicon.in")
         self.skillicon_btn.setFlat(True)
+        self.skillicon_btn.setIcon(skillicon_logo_icon())
+        self.skillicon_btn.setIconSize(QSize(184, 34))
 
-        # Modern typography
-        brand_font = QFont(FONT_FAMILY, 11)
-        brand_font.setWeight(QFont.DemiBold)
-        self.skillicon_btn.setFont(brand_font)
-
-        # Open website on click
+        # Open website on click (same as before)
         self.skillicon_btn.clicked.connect(
           lambda: QDesktopServices.openUrl(QUrl("https://skillicon.in/"))
         )

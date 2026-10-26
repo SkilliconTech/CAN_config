@@ -746,7 +746,7 @@ class ConfigurationTool(QMainWindow):
             data = self.controller.load_configuration(path)
 
             self._apply_config(data)
-            self._discard_draft()
+            self._mark_clean()
 
             return True
 
@@ -813,6 +813,11 @@ class ConfigurationTool(QMainWindow):
         path = item.data(Qt.UserRole)
         if not path:
             return
+
+        if not self._confirm_discard_changes():
+            self._reselect_current_file()
+            return
+
         if self._read_json(path):
             self.statusBar().showMessage(f"Loaded: {path}", 3000)
             self._show_device_tree()

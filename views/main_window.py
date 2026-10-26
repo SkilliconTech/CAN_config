@@ -1138,7 +1138,7 @@ class ConfigurationTool(QMainWindow):
         if not os.path.splitext(path)[1]:
             path += ".json"
 
-        if self._write_json(path):
+        if self._write_json(path, mark_clean=False):
             self.statusBar().showMessage(f"Exported: {path}", 3000)
 
     # ------------------------------------------------------------------

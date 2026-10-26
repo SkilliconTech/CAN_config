@@ -249,9 +249,8 @@ class CANFDSettingsDialog(QWidget):
     @staticmethod
     def _select(combo, text):
         index = combo.findText(text)
-        if index >= 0:
-            combo.setCurrentIndex(index)
-
+        # if the value is not in the list, use the first entry
+        combo.setCurrentIndex(index if index >= 0 else 0)
     def _restore_settings(self):
         s = self.settings
 

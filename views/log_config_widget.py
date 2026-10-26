@@ -136,6 +136,13 @@ class LogConfigWidget(QStackedWidget):
         self.size_limit = make_spin(1, 100, " MB")
         self.time_limit = make_spin(0, 60, " minutes")
         self.time_limit.setSpecialValueText("Disabled")
+        self.time_limit.setSpecialValueText("Disabled")
+
+        # Keep the exact values loaded from a file unless the user edits them
+        self._size_bytes_loaded = None
+        self._time_seconds_loaded = None
+        self.size_limit.valueChanged.connect(self._on_size_edited)
+        self.time_limit.valueChanged.connect(self._on_time_edited)
 
         for label, w in [("Formats", self.asc), ("", self.mf4),
                          ("File size limit", self.size_limit),

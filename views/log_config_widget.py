@@ -238,7 +238,11 @@ class LogConfigWidget(QStackedWidget):
         self.rearm.setEnabled(can_rearm)
         if not can_rearm:
             self.rearm.setChecked(False)
-    
+    def _on_size_edited(self, _value):
+        self._size_bytes_loaded = None      # user changed it: use the box
+
+    def _on_time_edited(self, _value):
+        self._time_seconds_loaded = None    # user changed it: use the box
     def notify_configuration_changed(self):
         self.configuration_changed.emit()
         

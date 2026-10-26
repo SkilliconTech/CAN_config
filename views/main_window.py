@@ -894,16 +894,25 @@ class ConfigurationTool(QMainWindow):
     def on_new(self):
         self._discard_draft()   # drop an earlier unsaved draft, if any
 
-        self.classic_can_settings = (
-          self.controller.get_classic_can()
-       )
+        # 1) Reset every stored setting to the factory defaults
+        self.classic_can_settings = dict(DEFAULT_CLASSIC_CAN)
         self.classic_can_enabled = False
+        self.classic_can_default_settings = dict(DEFAULT_CLASSIC_CAN)
+        self.classic_can_default_all_settings = dict(DEFAULT_CLASSIC_CAN)
+        self.classic_can_all_settings = dict(DEFAULT_CLASSIC_CAN)
+        self.canfd_settings = dict(DEFAULT_CANFD)
+        self.controller.update_logging_config(default_log_config())
+        self.log_pages.apply(default_log_config())
+
+        # 2) Refresh the pages so they show the defaults right away
+        self.classic_can_page.load_from_parent()
+        self.canfd_page.load_from_parent()
+
+        # 3) Forget the current file and start a new one
         self.current_file_path = None
         self._update_title()
         self._show_device_tree()
         self.statusBar().showMessage("New configuration", 3000)
-        self.canfd_settings = dict(DEFAULT_CANFD)
-        self.log_pages.apply(default_log_config())
         self.imported_list.clearSelection()
 
         # show the empty "type a file name" row

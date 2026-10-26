@@ -199,6 +199,9 @@ class CANFDSettingsDialog(QWidget):
         self.save_button = QPushButton("Save")
         self.cancel_button = QPushButton("Cancel")
 
+        self.apply_button.setToolTip("Use these settings in the app (does not write a file)")
+        self.save_button.setToolTip("Apply these settings and save the configuration to the file")
+
         self.apply_button.clicked.connect(self.on_apply)
         self.save_button.clicked.connect(self.on_save)
         self.cancel_button.clicked.connect(self.on_cancel)

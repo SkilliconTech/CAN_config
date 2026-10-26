@@ -9,7 +9,7 @@ DEFAULT_CLASSIC_CAN = {
 # Default CAN FD settings
 DEFAULT_CANFD = {
     "arbitration_bitrate": "500 kbits/s",
-    "arbitration_sp": "80.00%",
+    "arbitration_sp": "80%",
     "arbitration_sjw": "1",
     "data_bitrate": "500 kbits/s",
     "data_sp": "80.00%",

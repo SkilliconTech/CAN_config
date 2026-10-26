@@ -708,7 +708,7 @@ class ConfigurationTool(QMainWindow):
 
     
     
-    def _write_json(self, path: str) -> bool:
+    def _write_json(self, path: str, mark_clean: bool = True) -> bool:
 
       try:
         # Step 1: Collect configuration from the UI

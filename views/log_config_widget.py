@@ -314,6 +314,13 @@ class LogConfigWidget(QStackedWidget):
             0 if time_seconds == 0 else max(1, round(time_seconds / 60))
         )
 
+        # setValue above counts as an "edit", so remember the exact values
+        # AFTER it
+        self._size_bytes_loaded = size_bytes
+        self._time_seconds_loaded = time_seconds
+        self.time_limit.setToolTip(f"Stored value: {time_seconds} seconds")
+        self.size_limit.setToolTip(f"Stored value: {size_bytes} bytes")
+
         self.update_controls()
         if self.currentIndex() == self.PAGES.index("preview"):
             self.refresh_preview()

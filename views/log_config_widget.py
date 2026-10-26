@@ -266,11 +266,21 @@ class LogConfigWidget(QStackedWidget):
             data["triggers"][side] = trigger
 
         data["triggers"]["rearm_after_stop"] = self.rearm.isChecked()
+        size_bytes = (
+            self._size_bytes_loaded
+            if self._size_bytes_loaded is not None
+            else self.size_limit.value() * 1024 * 1024
+        )
+        time_seconds = (
+            self._time_seconds_loaded
+            if self._time_seconds_loaded is not None
+            else self.time_limit.value() * 60
+        )
         data["logging"].update(
             formats=[name for name, w in [("asc", self.asc), ("mf4", self.mf4)]
                      if w.isChecked()],
-            file_split_size_bytes=self.size_limit.value() * 1024 * 1024,
-            file_split_time_seconds=self.time_limit.value() * 60,
+            file_split_size_bytes=size_bytes,
+            file_split_time_seconds=time_seconds,
         )
         return data
 

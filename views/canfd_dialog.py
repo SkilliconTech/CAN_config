@@ -306,6 +306,7 @@ class CANFDSettingsDialog(QWidget):
             self.parent_window.canfd_settings = self._collect_settings()
 
     def on_apply(self):
+        """Apply: update the app only (no file write)."""
         self.apply_to_parent()
         if self.parent_window is not None:
             self.parent_window.statusBar().showMessage(

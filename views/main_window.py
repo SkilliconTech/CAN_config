@@ -720,6 +720,9 @@ class ConfigurationTool(QMainWindow):
             data
         )
 
+        if mark_clean:
+            self._saved_snapshot = json.dumps(data, sort_keys=True)
+
         return True
 
       except ValueError as error:

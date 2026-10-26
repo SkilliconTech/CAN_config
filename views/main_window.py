@@ -982,6 +982,12 @@ class ConfigurationTool(QMainWindow):
         )
         if not path:
             return
+        
+        if not path:
+            return
+
+        if not self._confirm_discard_changes():
+            return
 
         if self._read_json(path):
             self.current_file_path = path

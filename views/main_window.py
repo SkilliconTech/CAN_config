@@ -541,7 +541,7 @@ class ConfigurationTool(QMainWindow):
 
         self.apply_theme()
         self._show_device_tree()      # show the device tree on startup
-
+        self._mark_clean()
     # ------------------------------------------------------------------
     # Toolbar
     # ------------------------------------------------------------------

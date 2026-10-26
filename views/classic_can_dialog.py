@@ -207,21 +207,18 @@ class ClassicCANSettingsDialog(QWidget):
 
     def _restore_settings(self):
         target = (
-            f"{self.settings.get('bitrate', '100.000 kbits/s')}, "
+            f"{self.settings.get('bitrate', '50.000 kbits/s')}, "
             f"{self.settings.get('sampling_point', '75%')}"
         )
 
         index = self.bitrate_combo.findText(target)
-        if index >= 0:
-            self.bitrate_combo.setCurrentIndex(index)
+        # if the value is not in the list, use the first entry
+        self.bitrate_combo.setCurrentIndex(index if index >= 0 else 0)
 
         sjw_index = self.sjw_combo.findText(
             str(self.settings.get("sjw", "1"))
         )
-
-        if sjw_index >= 0:
-            self.sjw_combo.setCurrentIndex(sjw_index)
-
+        self.sjw_combo.setCurrentIndex(sjw_index if sjw_index >= 0 else 0)
     def _collect_settings(self):
         selected = self.bitrate_combo.currentText()
 

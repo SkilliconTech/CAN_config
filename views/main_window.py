@@ -577,7 +577,58 @@ class ConfigurationTool(QMainWindow):
             f"QStatusBar {{ background-color: {c['bg_panel']};"
             f" color: {c['text_secondary']}; }}"
         )
+        
+    # ------------------------------------------------------------------
+    # Unsaved-changes warning
+    # ------------------------------------------------------------------
+    def _snapshot(self):
+        try:
+            return json.dumps(self._collect_config(), sort_keys=True)
+        except (ValueError, TypeError):
+            return None
 
+    def _mark_clean(self):
+        """Remember the current configuration as 'saved'."""
+        self._saved_snapshot = self._snapshot()
+
+    def _has_unsaved_changes(self):
+        current = self._snapshot()
+        if current is None:          # half-typed / invalid values
+            return True
+        return current != self._saved_snapshot
+
+    def _confirm_discard_changes(self):
+        """Ask 'Save your changes?'. Returns True if it is OK to continue."""
+        if not self._has_unsaved_changes():
+            return True
+
+        answer = QMessageBox.question(
+            self, "Unsaved changes", "Save your changes?",
+            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+            QMessageBox.Save
+        )
+        if answer == QMessageBox.Cancel:
+            return False
+        if answer == QMessageBox.Save:
+            self.on_save()
+            # the file dialog may have been cancelled, or saving may have failed
+            return not self._has_unsaved_changes()
+        return True                  # Discard
+
+    def _reselect_current_file(self):
+        """Put the list highlight back on the file that is really open."""
+        self.imported_list.clearSelection()
+        for i in range(self.imported_list.count()):
+            item = self.imported_list.item(i)
+            if item.data(Qt.UserRole) == self.current_file_path:
+                self.imported_list.setCurrentItem(item)
+                break
+
+    def closeEvent(self, event):
+        if self._confirm_discard_changes():
+            event.accept()
+        else:
+            event.ignore()
     # ------------------------------------------------------------------
     # Window title
     # ------------------------------------------------------------------

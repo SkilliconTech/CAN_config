@@ -52,6 +52,9 @@ class LogConfigWidget(QStackedWidget):
         self.get_full_config = get_full_config
         self.show_status = show_status
         self.rules = []
+        self._applied_triggers = None    # triggers currently in the configuration
+        self._saved_triggers = None      # last saved state (Cancel goes back to it)
+
 
         # ---------------- Filters page ----------------
         page = QWidget()
@@ -124,6 +127,23 @@ class LogConfigWidget(QStackedWidget):
             "recording start; repeated start frames do not extend it. SD full or "
             "write failure stops without rearming. Power loss may lose buffered data."
         ))
+
+        trigger_buttons = QHBoxLayout()
+        trigger_buttons.addStretch(1)
+        self.trigger_apply_button = QPushButton("Apply")
+        self.trigger_save_button = QPushButton("Save")
+        self.trigger_cancel_button = QPushButton("Cancel")
+        self.trigger_apply_button.setToolTip("Use these settings in the app now")
+        self.trigger_save_button.setToolTip("Keep the changes made in this window")
+        self.trigger_apply_button.clicked.connect(self.on_trigger_apply)
+        self.trigger_save_button.clicked.connect(self.on_trigger_save)
+        self.trigger_cancel_button.clicked.connect(self.on_trigger_cancel)
+        for button in (self.trigger_apply_button,
+                       self.trigger_save_button,
+                       self.trigger_cancel_button):
+            trigger_buttons.addWidget(button)
+        form.addRow(trigger_buttons)
+
         self.addWidget(page)
 
         # ---------------- Log Files page ----------------
@@ -185,40 +205,24 @@ class LogConfigWidget(QStackedWidget):
 
         self.apply(default_log_config())
 
-        # Notify when logging controls change
-        for combo in (self.filter_mode, self.start, self.stop):
-            combo.currentIndexChanged.connect(
-                self.notify_configuration_changed
-            )
+        # Notify when logging controls change.
+        # (The trigger controls are not listed here: they use
+        # Apply / Save / Cancel instead.)
+        self.filter_mode.currentIndexChanged.connect(
+            self.notify_configuration_changed
+        )
 
-        for checkbox in (
-            self.start_ext,
-            self.stop_ext,
-            self.rearm,
-            self.asc,
-            self.mf4
-        ):
-            checkbox.toggled.connect(
-                self.notify_configuration_changed
-            )
+        for checkbox in (self.asc, self.mf4):
+            checkbox.toggled.connect(self.notify_configuration_changed)
 
-        for field in (self.start_id, self.stop_id):
-            field.textChanged.connect(
-                self.notify_configuration_changed
-            )
-
-        for spinbox in (
-            self.duration,
-            self.size_limit,
-            self.time_limit
-        ):
-            spinbox.valueChanged.connect(
-                self.notify_configuration_changed
-            )
+        for spinbox in (self.size_limit, self.time_limit):
+            spinbox.valueChanged.connect(self.notify_configuration_changed)
 
     # ---------------- page switching ----------------
     def show_page(self, name):
         self.setCurrentIndex(self.PAGES.index(name))
+        if name == "triggers":
+            self.load_triggers()        # show the last applied settings
         if name == "preview":
             self.refresh_preview()
 
@@ -243,16 +247,11 @@ class LogConfigWidget(QStackedWidget):
 
     def _on_time_edited(self, _value):
         self._time_seconds_loaded = None    # user changed it: use the box
-    def notify_configuration_changed(self):
-        self.configuration_changed.emit()
-        
-    def collect(self):
-        data = default_log_config()
-        data["filters"].update(
-            mode=self.filter_mode.currentData(),
-            rules=copy.deepcopy(self.rules),
-        )
 
+    # ---------------- Triggers: Apply / Save / Cancel ----------------
+    def _triggers_from_widgets(self):
+        """Read the trigger form as it is on screen right now."""
+        triggers = {}
         for side, selector, field, ext in [
             ("start", self.start, self.start_id, self.start_ext),
             ("stop", self.stop, self.stop_id, self.stop_ext),
@@ -263,9 +262,82 @@ class LogConfigWidget(QStackedWidget):
                                extended_id=ext.isChecked())
             elif trigger["type"] == "duration":
                 trigger["seconds"] = self.duration.value()
-            data["triggers"][side] = trigger
+            triggers[side] = trigger
+        triggers["rearm_after_stop"] = self.rearm.isChecked()
+        return triggers
 
-        data["triggers"]["rearm_after_stop"] = self.rearm.isChecked()
+    def _load_triggers_into_widgets(self, triggers):
+        """Show the given trigger settings in the form."""
+        for side, selector, field, ext in [
+            ("start", self.start, self.start_id, self.start_ext),
+            ("stop", self.stop, self.stop_id, self.stop_ext),
+        ]:
+            trigger = triggers[side]
+            select_data(selector, trigger["type"])
+            field.setText(trigger.get(
+                "can_id", "0x123" if side == "start" else "0x124"))
+            ext.setChecked(trigger.get("extended_id", False))
+
+        self.duration.setValue(triggers["stop"].get("seconds", 600))
+        self.rearm.setChecked(triggers["rearm_after_stop"])
+        self.update_controls()
+
+    def load_triggers(self):
+        """Called when the Triggers page opens."""
+        if self._applied_triggers is None:
+            return
+        self._load_triggers_into_widgets(self._applied_triggers)
+        self._saved_triggers = copy.deepcopy(self._applied_triggers)
+
+    def _apply_triggers(self):
+        """Check the form and put it into the configuration."""
+        triggers = self._triggers_from_widgets()
+        candidate = self.collect()
+        candidate["triggers"] = triggers
+        try:
+            validate_log_config(candidate)
+        except ValueError as error:
+            QMessageBox.warning(
+                self.window(), "Invalid trigger settings", str(error)
+            )
+            return False
+
+        self._applied_triggers = triggers
+        self.notify_configuration_changed()
+        return True
+
+    def on_trigger_apply(self):
+        if self._apply_triggers():
+            self.show_status("Trigger settings applied")
+
+    def on_trigger_save(self):
+        if self._apply_triggers():
+            self._saved_triggers = copy.deepcopy(self._applied_triggers)
+            self.show_status("Trigger changes saved")
+
+    def on_trigger_cancel(self):
+        if self._saved_triggers is None:
+            return
+        self._applied_triggers = copy.deepcopy(self._saved_triggers)
+        self._load_triggers_into_widgets(self._applied_triggers)
+        self.notify_configuration_changed()
+        self.show_status("Trigger changes cancelled")
+
+    def notify_configuration_changed(self):
+        self.configuration_changed.emit()
+        
+    def collect(self):
+        data = default_log_config()
+        data["filters"].update(
+            mode=self.filter_mode.currentData(),
+            rules=copy.deepcopy(self.rules),
+        )
+
+        data["triggers"] = copy.deepcopy(
+            self._applied_triggers
+            if self._applied_triggers is not None
+            else self._triggers_from_widgets()
+        )
         size_bytes = (
             self._size_bytes_loaded
             if self._size_bytes_loaded is not None
@@ -303,6 +375,9 @@ class LogConfigWidget(QStackedWidget):
 
         self.duration.setValue(data["triggers"]["stop"].get("seconds", 600))
         self.rearm.setChecked(data["triggers"]["rearm_after_stop"])
+
+        self._applied_triggers = copy.deepcopy(data["triggers"])
+        self._saved_triggers = copy.deepcopy(data["triggers"])
 
         self.asc.setChecked("asc" in data["logging"]["formats"])
         self.mf4.setChecked("mf4" in data["logging"]["formats"])

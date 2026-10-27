@@ -314,12 +314,19 @@ class CANFDSettingsDialog(QWidget):
             )
 
     def on_save(self):
-        """Save: apply this window's changes and write them into the file."""
+        """Save: keep the changes made in this window (no file, no path)."""
         self.apply_to_parent()
+        self._saved_settings = dict(self._collect_settings())
         if self.parent_window is not None:
-            self.parent_window.save_section("canfd", "CAN FD")
+            self.parent_window.statusBar().showMessage(
+                "CAN FD changes saved", 3000
+            )
 
     def on_cancel(self):
+        """Cancel: go back to the last saved settings of this window."""
+        saved = getattr(self, "_saved_settings", None)
+        if self.parent_window is not None and saved is not None:
+            self.parent_window.canfd_settings = dict(saved)
         self.load_from_parent()
         if self.parent_window is not None:
             self.parent_window.statusBar().showMessage(
@@ -333,6 +340,9 @@ class CANFDSettingsDialog(QWidget):
             getattr(self.parent_window, "canfd_settings", DEFAULT_CANFD)
         )
         self._restore_settings()
+
+        # remember the last saved state of this window (Cancel goes back to it)
+        self._saved_settings = dict(self.settings)
 
     def set_theme(self, c):
         """Match light/dark colors used by Log Configuration."""

@@ -1237,6 +1237,8 @@ class ConfigurationTool(QMainWindow):
             return
 
         if self._read_json(path):
+            self.current_file_path = path
+            self._update_title()
             self._add_imported_file(path)
             self._show_device_tree()
             self.statusBar().showMessage(f"Imported: {path}", 3000)

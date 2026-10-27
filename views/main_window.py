@@ -429,7 +429,16 @@ class ConfigurationTool(QMainWindow):
             self.title_label
         )
 
+        self.mode_label = QLabel("Active mode: None")
+        self.mode_label.setObjectName("modeLabel")
+        self.mode_label.setToolTip(
+            "This logger has one CAN channel, so only one mode is active.\n"
+            "Open Classic CAN or CAN FD and choose Enable."
+        )
+        topbar.addSpacing(16)
+        topbar.addWidget(self.mode_label)
         topbar.addStretch(1)
+
 
         # 1) Help button
         self.help_button = QPushButton("?")

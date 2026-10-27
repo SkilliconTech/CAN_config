@@ -50,17 +50,6 @@ class ClassicCANSettingsDialog(QWidget):
         main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(8)
 
-        # Bus parameter selection
-        bus_mode_layout = QHBoxLayout()
-
-        enter_bus = QRadioButton("Enter bus parameters")
-        enter_bus.setChecked(True)
-
-        bus_mode_layout.addWidget(enter_bus)
-        bus_mode_layout.addSpacing(30)
-
-        main_layout.addLayout(bus_mode_layout)
-
         # Bus parameters
         bus_group = QGroupBox("Bus parameters")
         bus_layout = QVBoxLayout(bus_group)

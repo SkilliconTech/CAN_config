@@ -882,9 +882,10 @@ class ConfigurationTool(QMainWindow):
             return
 
         if self._read_json(path):
+            self.current_file_path = path
+            self._update_title()
             self.statusBar().showMessage(f"Loaded: {path}", 3000)
             self._show_device_tree()
-
     # ------------------------------------------------------------------
     # New file row (like "New File" in VS Code)
     # ------------------------------------------------------------------

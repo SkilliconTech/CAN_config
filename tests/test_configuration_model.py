@@ -1,12 +1,12 @@
-
 from models.config_model import ConfigurationModel
+from models.constants import DEFAULT_CLASSIC_CAN
 
 
 def test_classic_can_default_settings():
 
     model = ConfigurationModel()
 
-    assert model.classic_can["bitrate"] == "50.000 kbits/s"
+    assert model.classic_can["bitrate"] == DEFAULT_CLASSIC_CAN["bitrate"]   # <-- 3b (1st)
     assert model.classic_can["enabled"] is False
 
 
@@ -53,7 +53,7 @@ def test_reset_configuration():
 
     model.reset()
 
-    assert model.get_classic_can()["bitrate"] == "50.000 kbits/s"
+    assert model.get_classic_can()["bitrate"] == DEFAULT_CLASSIC_CAN["bitrate"]   # <-- 3b (2nd)
 
 
 def test_model_returns_independent_copy():
@@ -63,4 +63,4 @@ def test_model_returns_independent_copy():
     settings = model.get_classic_can()
     settings["bitrate"] = "250.000 kbits/s"
 
-    assert model.get_classic_can()["bitrate"] == "50.000 kbits/s"
+    assert model.get_classic_can()["bitrate"] == DEFAULT_CLASSIC_CAN["bitrate"]   # <-- 3b (3rd)

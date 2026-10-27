@@ -1262,7 +1262,7 @@ class ConfigurationTool(QMainWindow):
             item.setExpanded(not item.isExpanded())
             return
 
-        name = item.text(0)
+        name = item.data(0, Qt.UserRole) or item.text(0)
 
         page = LOG_PAGES.get(name)
         if page:

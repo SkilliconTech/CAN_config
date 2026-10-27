@@ -1,7 +1,8 @@
 from models.config_model import ConfigurationModel
 from services.config_validator import (
     validate_log_config,
-    validate_complete_config
+    validate_complete_config,
+    validate_can_mode
 )
 from core.repository_interface import ConfigurationRepository
 from services.config_version import check_config_version

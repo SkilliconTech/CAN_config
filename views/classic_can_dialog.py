@@ -285,10 +285,13 @@ class ClassicCANSettingsDialog(QWidget):
             )
 
     def on_save(self):
-        """Save: apply this window's changes and write them into the file."""
+        """Save: keep the changes made in this window (no file, no path)."""
         self.apply_to_parent()
+        self._saved_settings = dict(self._collect_settings())
         if self.parent_window is not None:
-            self.parent_window.save_section("classic_can", "Classic CAN")
+            self.parent_window.statusBar().showMessage(
+                "Classic CAN changes saved", 3000
+            )
             
     def on_cancel(self):
         """Cancel: discard form edits and reload last applied settings."""
@@ -316,6 +319,9 @@ class ClassicCANSettingsDialog(QWidget):
         else:
             self.disable_radio.setChecked(True)
         self.update_current_settings()
+
+        # remember the last saved state of this window (Cancel goes back to it)
+        self._saved_settings = dict(self.settings)
 
     def set_theme(self, c):
         """Match light/dark colors used by Log Configuration."""

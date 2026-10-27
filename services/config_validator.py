@@ -217,7 +217,7 @@ def validate_can_mode(classic, canfd):
         "Classic CAN and CAN FD are both enabled. This logger has one CAN "
         "channel, so only one mode can be active. Set one of them to Disable."
     )
-    
+
 def validate_complete_config(data):
     """
     Validate the overall configuration structure.
@@ -246,6 +246,7 @@ def validate_complete_config(data):
     validate_classic_can(data["classic_can"])
     if "canfd" in data:
         validate_canfd(data["canfd"])
+    validate_can_mode(data["classic_can"], data.get("canfd", {}))
 
     from models.config_model import default_log_config
 

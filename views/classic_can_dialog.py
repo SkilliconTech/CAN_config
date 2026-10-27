@@ -285,11 +285,13 @@ class ClassicCANSettingsDialog(QWidget):
             )
 
     def on_save(self):
-        """Apply the settings, then save the whole configuration to the file."""
+        """Save: keep the changes made in this window (no file is written)."""
         self.apply_to_parent()
         if self.parent_window is not None:
-            self.parent_window.on_save()
-
+            self.parent_window.statusBar().showMessage(
+                "Classic CAN changes saved. Use Save in the sidebar "
+                "to write the file.", 4000
+            )
     def on_cancel(self):
         """Cancel: discard form edits and reload last applied settings."""
         self.load_from_parent()

@@ -1,28 +1,25 @@
-
-from PySide6.QtWidgets import QDialog
+from PySide6.QtWidgets import QWidget
 
 from views.classic_can_dialog import ClassicCANSettingsDialog
 from views.canfd_dialog import CANFDSettingsDialog
 
 
-def test_classic_can_dialog_opens(qtbot):
+def test_classic_can_page_opens(qtbot):
 
-    dialog = ClassicCANSettingsDialog()
+    page = ClassicCANSettingsDialog()
 
-    qtbot.addWidget(dialog)
+    qtbot.addWidget(page)
 
-    assert isinstance(dialog, QDialog)
+    assert isinstance(page, QWidget)
 
 
-def test_canfd_dialog_opens(qtbot):
+def test_canfd_page_opens(qtbot):
 
-    dialog = CANFDSettingsDialog()
+    page = CANFDSettingsDialog()
 
-    qtbot.addWidget(dialog)
+    qtbot.addWidget(page)
 
-    assert isinstance(dialog, QDialog)
-
-    assert dialog.windowTitle() == "CAN Channel 1 settings"
+    assert isinstance(page, QWidget)
 
 
 def test_canfd_dialog_default_settings(qtbot):

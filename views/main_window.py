@@ -678,13 +678,8 @@ class ConfigurationTool(QMainWindow):
         return "None"
 
     def _refresh_mode_display(self):
-        """Update the top-bar label and the marks in the tree."""
-        label = getattr(self, "mode_label", None)
-        if label is None:                 # window is still being built
-            return
-
+        """Show '(active)' next to the enabled CAN mode in the tree."""
         mode = self._active_mode_name()
-        label.setText(f"Active mode: {mode}")
 
         items = getattr(self, "_bus_mode_items", None)
         if items:
@@ -1430,20 +1425,7 @@ class ConfigurationTool(QMainWindow):
             f"color: {c['text_primary']};"
         )
 
-        self.mode_label.setStyleSheet(
-            f"""
-            QLabel {{
-                color: {c['accent_blue']};
-                background-color: {c['btn_bg']};
-                border: 1px solid {c['btn_border']};
-                border-radius: {RADIUS_SM}px;
-                padding: 5px 12px;
-                font-size: 10pt;
-                font-weight: 600;
-            }}
-            """
-        )
-
+        
         self.theme_toggle.setStyleSheet(
             f"""
             #themeToggle {{

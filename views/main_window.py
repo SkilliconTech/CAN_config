@@ -134,8 +134,6 @@ class ConfigurationTool(QMainWindow):
     @classic_can_settings.setter
     def classic_can_settings(self, settings):
         self.controller.update_classic_can(settings)
-        if settings.get("enabled"):
-            self._turn_off_other_mode("canfd")
         self._refresh_mode_display()
 
     
@@ -146,8 +144,6 @@ class ConfigurationTool(QMainWindow):
     @canfd_settings.setter
     def canfd_settings(self, settings):
         self.controller.update_canfd(settings)
-        if settings.get("enabled"):
-            self._turn_off_other_mode("classic")
         self._refresh_mode_display()
 
 
@@ -678,17 +674,18 @@ class ConfigurationTool(QMainWindow):
         return "None"
 
     def _refresh_mode_display(self):
-        """Show '(active)' next to the enabled CAN mode in the tree."""
-        mode = self._active_mode_name()
+        """Show '(enabled)' next to each CAN mode that is switched on."""
+        classic_on = bool(self.controller.get_classic_can().get("enabled"))
+        fd_on = bool(self.controller.get_canfd().get("enabled"))
 
         items = getattr(self, "_bus_mode_items", None)
         if items:
             try:
                 items[0].setText(
-                    0, "Classic CAN  (active)" if mode == "Classic CAN"
+                    0, "Classic CAN  (enabled)" if classic_on
                     else "Classic CAN")
                 items[1].setText(
-                    0, "CAN FD  (active)" if mode == "CAN FD"
+                    0, "CAN FD  (enabled)" if fd_on
                     else "CAN FD")
             except RuntimeError:          # tree items were just rebuilt
                 pass

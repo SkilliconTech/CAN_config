@@ -634,6 +634,68 @@ class ConfigurationTool(QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+    # ------------------------------------------------------------------
+    # Active CAN mode (single-channel logger: only one mode at a time)
+    # ------------------------------------------------------------------
+    def _turn_off_other_mode(self, other):
+        """Switch off 'other' ('classic' or 'canfd') if it is enabled."""
+        if other == "canfd":
+            settings = dict(self.controller.get_canfd())
+            page = getattr(self, "canfd_page", None)
+            update = self.controller.update_canfd
+            off_name, on_name = "CAN FD", "Classic CAN"
+        else:
+            settings = dict(self.controller.get_classic_can())
+            page = getattr(self, "classic_can_page", None)
+            update = self.controller.update_classic_can
+            off_name, on_name = "Classic CAN", "CAN FD"
+
+        if not settings.get("enabled"):
+            return
+
+        settings["enabled"] = False
+        update(settings)
+        if other == "classic":
+            self.classic_can_enabled = False
+        if page is not None:
+            page.disable_radio.setChecked(True)
+
+        self.statusBar().showMessage(
+            f"{off_name} turned off - {on_name} is now the active mode", 5000
+        )
+
+    def _active_mode_name(self):
+        classic = bool(self.controller.get_classic_can().get("enabled"))
+        fd = bool(self.controller.get_canfd().get("enabled"))
+        if classic and fd:
+            return "Conflict"
+        if classic:
+            return "Classic CAN"
+        if fd:
+            return "CAN FD"
+        return "None"
+
+    def _refresh_mode_display(self):
+        """Update the top-bar label and the marks in the tree."""
+        label = getattr(self, "mode_label", None)
+        if label is None:                 # window is still being built
+            return
+
+        mode = self._active_mode_name()
+        label.setText(f"Active mode: {mode}")
+
+        items = getattr(self, "_bus_mode_items", None)
+        if items:
+            try:
+                items[0].setText(
+                    0, "Classic CAN  (active)" if mode == "Classic CAN"
+                    else "Classic CAN")
+                items[1].setText(
+                    0, "CAN FD  (active)" if mode == "CAN FD"
+                    else "CAN FD")
+            except RuntimeError:          # tree items were just rebuilt
+                pass
     # ------------------------------------------------------------------
     # Window title
     # ------------------------------------------------------------------

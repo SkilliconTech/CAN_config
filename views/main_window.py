@@ -1460,14 +1460,6 @@ class ConfigurationTool(QMainWindow):
                 border-radius: {RADIUS_SM}px;
             }}
 
-        self.theme_toggle.setStyleSheet(
-            f"""
-            #themeToggle {{
-                background-color: {c['bg_panel']};
-                border: 1px solid {c['border']};
-                border-radius: {RADIUS_SM}px;
-            }}
-
             #themeToggle:hover {{
                 border: 1px solid {c['accent_blue']};
             }}

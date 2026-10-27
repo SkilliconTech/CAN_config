@@ -1233,8 +1233,13 @@ class ConfigurationTool(QMainWindow):
         self.new_tree.clear()
 
         bus_item = QTreeWidgetItem(["Bus Configuration"])
-        bus_item.addChild(QTreeWidgetItem(["Classic CAN"]))
-        bus_item.addChild(QTreeWidgetItem(["CAN FD"]))
+        classic_item = QTreeWidgetItem(["Classic CAN"])
+        classic_item.setData(0, Qt.UserRole, "Classic CAN")
+        fd_item = QTreeWidgetItem(["CAN FD"])
+        fd_item.setData(0, Qt.UserRole, "CAN FD")
+        bus_item.addChild(classic_item)
+        bus_item.addChild(fd_item)
+        self._bus_mode_items = (classic_item, fd_item)
 
         self.new_tree.addTopLevelItem(bus_item)
         log_item = QTreeWidgetItem(["Log Configuration"])
@@ -1248,6 +1253,7 @@ class ConfigurationTool(QMainWindow):
         self.new_tree.addTopLevelItem(preview_item)
 
         bus_item.setExpanded(False)
+        self._refresh_mode_display()
         self.new_tree.setVisible(True)
     
     

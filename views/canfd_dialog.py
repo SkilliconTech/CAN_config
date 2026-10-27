@@ -199,8 +199,8 @@ class CANFDSettingsDialog(QWidget):
         self.save_button = QPushButton("Save")
         self.cancel_button = QPushButton("Cancel")
 
-        self.apply_button.setToolTip("Use these settings in the app (does not write a file)")
-        self.save_button.setToolTip("Apply these settings and save the configuration to the file")
+        self.apply_button.setToolTip("Use these settings in the app (does not write the file)")
+        self.save_button.setToolTip("Save the changes of this window into the current file")
 
         self.apply_button.clicked.connect(self.on_apply)
         self.save_button.clicked.connect(self.on_save)
@@ -314,10 +314,10 @@ class CANFDSettingsDialog(QWidget):
             )
 
     def on_save(self):
-        """Apply the settings, then save the whole configuration to the file."""
+        """Save: apply this window's changes and write them into the file."""
         self.apply_to_parent()
         if self.parent_window is not None:
-            self.parent_window.on_save()
+            self.parent_window.save_section("canfd", "CAN FD")
 
     def on_cancel(self):
         self.load_from_parent()

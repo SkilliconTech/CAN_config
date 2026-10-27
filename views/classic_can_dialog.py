@@ -178,8 +178,8 @@ class ClassicCANSettingsDialog(QWidget):
         self.save_button = QPushButton("Save")
         self.cancel_button = QPushButton("Cancel")
 
-        self.apply_button.setToolTip("Use these settings in the app (does not write a file)")
-        self.save_button.setToolTip("Apply these settings and save the configuration to the file")
+        self.apply_button.setToolTip("Use these settings in the app (does not write the file)")
+        self.save_button.setToolTip("Save the changes of this window into the current file")
 
         self.apply_button.clicked.connect(self.on_apply)
         self.save_button.clicked.connect(self.on_save)
@@ -277,7 +277,7 @@ class ClassicCANSettingsDialog(QWidget):
             )
 
     def on_apply(self):
-        """Apply: update model only (no file write)."""
+        """Apply: update the app only (no file write)."""
         self.apply_to_parent()
         if self.parent_window is not None:
             self.parent_window.statusBar().showMessage(
@@ -285,13 +285,10 @@ class ClassicCANSettingsDialog(QWidget):
             )
 
     def on_save(self):
-        """Save: keep the changes made in this window (no file is written)."""
+        """Save: apply this window's changes and write them into the file."""
         self.apply_to_parent()
         if self.parent_window is not None:
-            self.parent_window.statusBar().showMessage(
-                "Classic CAN changes saved. Use Save in the sidebar "
-                "to write the file.", 4000
-            )
+            self.parent_window.save_section("classic_can", "Classic CAN")
     def on_cancel(self):
         """Cancel: discard form edits and reload last applied settings."""
         self.load_from_parent()

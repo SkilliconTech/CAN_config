@@ -1438,6 +1438,28 @@ class ConfigurationTool(QMainWindow):
             f"color: {c['text_primary']};"
         )
 
+        self.mode_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {c['accent_blue']};
+                background-color: {c['btn_bg']};
+                border: 1px solid {c['btn_border']};
+                border-radius: {RADIUS_SM}px;
+                padding: 5px 12px;
+                font-size: 10pt;
+                font-weight: 600;
+            }}
+            """
+        )
+
+        self.theme_toggle.setStyleSheet(
+            f"""
+            #themeToggle {{
+                background-color: {c['bg_panel']};
+                border: 1px solid {c['border']};
+                border-radius: {RADIUS_SM}px;
+            }}
+
         self.theme_toggle.setStyleSheet(
             f"""
             #themeToggle {{

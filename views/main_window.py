@@ -1059,6 +1059,54 @@ class ConfigurationTool(QMainWindow):
             self._show_device_tree()
             self.statusBar().showMessage(f"Opened: {path}", 3000)
 
+    def save_section(self, key, title):
+        """Save only one section (Classic CAN or CAN FD) into the current file.
+        The rest of the file stays exactly as it is on disk."""
+        path = self.current_file_path
+        if path is None:
+            # no file yet: do a normal full save (it asks for the path)
+            self.on_save()
+            return
+
+        try:
+            data = self.controller.load_configuration(path)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(
+                self, "Cannot update file",
+                f"The file could not be read:\n{error}\n\n"
+                "Use Save in the sidebar to write the whole configuration."
+            )
+            return
+
+        other = "canfd" if key == "classic_can" else "classic_can"
+        section = dict(
+            self.classic_can_settings if key == "classic_can"
+            else self.canfd_settings
+        )
+        data[key] = section
+        if section.get("enabled") and isinstance(data.get(other), dict):
+            data[other]["enabled"] = False      # one CAN mode at a time
+
+        try:
+            self.controller.save_configuration(path, data)
+        except (ValueError, OSError, TypeError, KeyError) as error:
+            QMessageBox.warning(self, "Save error", str(error))
+            return
+
+        # tell the unsaved-changes check that this section is now on disk
+        try:
+            snap = json.loads(self._saved_snapshot)
+            snap[key] = dict(section)
+            if section.get("enabled") and isinstance(snap.get(other), dict):
+                snap[other]["enabled"] = False
+            self._saved_snapshot = json.dumps(snap, sort_keys=True)
+        except (TypeError, ValueError):
+            pass
+
+        self.statusBar().showMessage(
+            f"{title} settings saved to {os.path.basename(path)}", 4000
+        )
+
     def on_save(self):
         # file created with New but not saved yet -> ask for the folder
         if self.current_file_path is None and self._draft_item is not None:

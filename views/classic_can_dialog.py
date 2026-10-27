@@ -289,6 +289,7 @@ class ClassicCANSettingsDialog(QWidget):
         self.apply_to_parent()
         if self.parent_window is not None:
             self.parent_window.save_section("classic_can", "Classic CAN")
+            
     def on_cancel(self):
         """Cancel: discard form edits and reload last applied settings."""
         self.load_from_parent()

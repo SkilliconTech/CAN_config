@@ -447,18 +447,37 @@ class LogConfigWidget(QStackedWidget):
         dialog = FilterDialog(parent, rule)
         while dialog.exec():
             rule = dialog.rule()
-            if any(r["filter_id"] == rule["filter_id"]
+
+            # 1) the filter ID (name) must be unique
+            new_id = rule["filter_id"].strip().lower()
+            if any(r["filter_id"].strip().lower() == new_id
                    for i, r in enumerate(self.rules) if i != index):
-                QMessageBox.warning(parent, "Duplicate name",
-                                    "Choose a unique filter name")
+                QMessageBox.warning(
+                    parent, "Duplicate filter ID",
+                    f"A filter with the ID '{rule['filter_id']}' already exists.\n\n"
+                    "Each filter must have a different ID. Please choose another."
+                )
                 continue
+
+            # 2) a CAN identifier can belong to only one enabled filter
+            others = [r for i, r in enumerate(self.rules) if i != index]
+            clash = find_conflict_with(rule, others)
+            if clash:
+                QMessageBox.warning(
+                    parent, "CAN identifier already used",
+                    f"This filter uses a CAN identifier that filter '{clash}' "
+                    "already uses.\n\n"
+                    "Each CAN identifier can belong to only one enabled "
+                    "filter. Change the identifier, or untick Enabled."
+                )
+                continue
+
             if index is None:
                 self.rules.append(rule)
             else:
                 self.rules[index] = rule
             self.refresh_table()
             break
-
     def add_filter(self):
         self.edit_rule()
 

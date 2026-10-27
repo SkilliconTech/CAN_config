@@ -124,6 +124,89 @@ def validate_log_config(data):
             "Existing logs must not be overwritten")
     return data
 
+# ---------------------------------------------------------------------------
+# CAN bus settings. These tables must match the dropdowns in the
+# Classic CAN and CAN FD pages. If you change a dropdown, change it here too.
+# Each bitrate maps to the sampling point(s) allowed with it.
+# ---------------------------------------------------------------------------
+CLASSIC_BITRATES = {
+    "100.000 kbits/s": ("75%",),
+    "125.000 kbits/s": ("75%",),
+    "250.000 kbits/s": ("75%",),
+    "500.000 kbits/s": ("75%",),
+    "1.000 Mbits/s": ("75%",),
+}
+CLASSIC_SJW = ("1", "2", "3", "4")
+
+# older files may contain "80.00%" for arbitration, so both are accepted
+CANFD_ARBITRATION = {
+    "500 kbits/s": ("80%", "80.00%"),
+    "1000 kbits/s": ("80%", "80.00%"),
+}
+CANFD_DATA = {
+    "500 kbits/s": ("80.00%",),
+    "1000 kbits/s": ("80.00%",),
+    "2000 kbits/s": ("80.00%",),
+    "4000 kbits/s": ("80.00%",),
+    "5000 kbits/s": ("75.00%",),
+    "8000 kbits/s": ("80.00%",),
+}
+CANFD_SJW = tuple(str(i) for i in range(1, 17))
+
+
+def _check_choice(settings, key, allowed, label):
+    # a missing value is allowed: the app fills in the default
+    if key not in settings:
+        return
+    value = settings[key]
+    ok = (isinstance(value, (str, int)) and not isinstance(value, bool)
+          and str(value) in allowed)
+    require(ok, f"{label}: '{value}' is not valid. "
+                f"Allowed values: {', '.join(allowed)}")
+
+
+def _check_pair(settings, bitrate_key, sp_key, table, label):
+    """Check a bitrate and its sampling point together."""
+    if bitrate_key in settings:
+        bitrate = settings[bitrate_key]
+        require(isinstance(bitrate, str) and bitrate in table,
+                f"{label} bitrate '{bitrate}' is not supported. "
+                f"Allowed values: {', '.join(table)}")
+
+    if sp_key in settings:
+        sp = settings[sp_key]
+        if bitrate_key in settings:
+            allowed = table[settings[bitrate_key]]
+        else:
+            allowed = tuple({s for sps in table.values() for s in sps})
+        require(isinstance(sp, str) and sp in allowed,
+                f"{label} sampling point '{sp}' is not valid"
+                f"{' for ' + str(settings[bitrate_key]) if bitrate_key in settings else ''}. "
+                f"Allowed: {', '.join(allowed)}")
+
+
+def validate_classic_can(settings):
+    require(isinstance(settings, dict),
+            "Classic CAN settings must be a JSON object.")
+    _check_pair(settings, "bitrate", "sampling_point",
+                CLASSIC_BITRATES, "Classic CAN")
+    _check_choice(settings, "sjw", CLASSIC_SJW, "Classic CAN SJW")
+    if "enabled" in settings:
+        check_bool(settings["enabled"], "Classic CAN enabled")
+
+
+def validate_canfd(settings):
+    require(isinstance(settings, dict),
+            "CAN FD settings must be a JSON object.")
+    _check_pair(settings, "arbitration_bitrate", "arbitration_sp",
+                CANFD_ARBITRATION, "CAN FD arbitration")
+    _check_choice(settings, "arbitration_sjw", CANFD_SJW,
+                  "CAN FD arbitration SJW")
+    _check_pair(settings, "data_bitrate", "data_sp",
+                CANFD_DATA, "CAN FD data")
+    _check_choice(settings, "data_sjw", CANFD_SJW, "CAN FD data SJW")
+    if "enabled" in settings:
+        check_bool(settings["enabled"], "CAN FD enabled")
 
 def validate_complete_config(data):
     """

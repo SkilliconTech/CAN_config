@@ -34,7 +34,8 @@ from views.widget_helpers import (
 from views.filter_dialog import FilterDialog
 
 from services.config_validator import (
-    validate_log_config
+    validate_log_config,
+    find_conflict_with
 )
 
 from resources.theme import RADIUS_SM

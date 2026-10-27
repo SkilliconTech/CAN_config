@@ -24,10 +24,11 @@ class AppController:
             for key in ("filters", "triggers", "logging")
         }
 
-        validate_log_config(log_config)
-
+        validate_log_config(log_config)      
+        validate_can_mode(data.get("classic_can", {}), data.get("canfd", {}))
         self.repository.save(path, data)
 
+       
     def load_configuration(self, path):
         data = self.repository.load(path)
 

@@ -368,7 +368,9 @@ class LogConfigWidget(QStackedWidget):
         validate_log_config(data)
 
         select_data(self.filter_mode, data["filters"]["mode"])
-        self.rules = copy.deepcopy(data["filters"]["rules"])
+        self.rules = [
+            r for r in copy.deepcopy(data["filters"]["rules"]) if r["enabled"]
+        ]
         self.refresh_table()
 
         for side, selector, field, ext in [
@@ -448,6 +450,22 @@ class LogConfigWidget(QStackedWidget):
         while dialog.exec():
             rule = dialog.rule()
 
+            # 0) Enabled is off: the filter is not kept at all
+            if not rule["enabled"]:
+                if index is not None:
+                    del self.rules[index]
+                    self.show_status(
+                        f"Filter '{rule['filter_id']}' is not enabled, "
+                        "so it was removed"
+                    )
+                else:
+                    self.show_status(
+                        f"Filter '{rule['filter_id']}' is not enabled, "
+                        "so it was not added"
+                    )
+                self.refresh_table()
+                break
+
             # 1) the filter ID (name) must be unique
             new_id = rule["filter_id"].strip().lower()
             if any(r["filter_id"].strip().lower() == new_id
@@ -459,7 +477,7 @@ class LogConfigWidget(QStackedWidget):
                 )
                 continue
 
-            # 2) a CAN identifier can belong to only one enabled filter
+            # 2) a CAN identifier can belong to only one filter
             others = [r for i, r in enumerate(self.rules) if i != index]
             clash = find_conflict_with(rule, others)
             if clash:
@@ -467,8 +485,8 @@ class LogConfigWidget(QStackedWidget):
                     parent, "CAN identifier already used",
                     f"This filter uses a CAN identifier that filter '{clash}' "
                     "already uses.\n\n"
-                    "Each CAN identifier can belong to only one enabled "
-                    "filter. Change the identifier, or untick Enabled."
+                    "Each CAN identifier can belong to only one filter. "
+                    "Change the identifier."
                 )
                 continue
 

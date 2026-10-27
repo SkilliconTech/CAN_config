@@ -232,6 +232,11 @@ def validate_complete_config(data):
             "CAN FD settings must be a JSON object."
         )
 
+    # NEW: reject incorrect CAN values
+    validate_classic_can(data["classic_can"])
+    if "canfd" in data:
+        validate_canfd(data["canfd"])
+
     from models.config_model import default_log_config
 
     log_data = default_log_config()
@@ -243,5 +248,3 @@ def validate_complete_config(data):
     validate_log_config(log_data)
 
     return True
-
-

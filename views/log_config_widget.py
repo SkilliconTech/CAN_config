@@ -94,10 +94,14 @@ class LogConfigWidget(QStackedWidget):
         layout.addLayout(row)
         self.addWidget(page)
 
-        # ---------------- Triggers page ----------------
+         # ---------------- Triggers page ----------------
         page = QWidget()
-        form = QFormLayout(page)
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(0, 0, 0, 0)
+
+        form = QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
+        page_layout.addLayout(form)
 
         self.start = make_combo([
             ("After initialization (power-on)", "power_on"),
@@ -128,6 +132,7 @@ class LogConfigWidget(QStackedWidget):
             "write failure stops without rearming. Power loss may lose buffered data."
         ))
 
+        # Apply / Save / Cancel: pinned to the bottom right of the page
         trigger_buttons = QHBoxLayout()
         trigger_buttons.addStretch(1)
         self.trigger_apply_button = QPushButton("Apply")
@@ -142,7 +147,9 @@ class LogConfigWidget(QStackedWidget):
                        self.trigger_save_button,
                        self.trigger_cancel_button):
             trigger_buttons.addWidget(button)
-        form.addRow(trigger_buttons)
+
+        page_layout.addStretch(1)              # pushes the buttons down
+        page_layout.addLayout(trigger_buttons)
 
         self.addWidget(page)
 

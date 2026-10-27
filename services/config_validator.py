@@ -208,6 +208,16 @@ def validate_canfd(settings):
     if "enabled" in settings:
         check_bool(settings["enabled"], "CAN FD enabled")
 
+def validate_can_mode(classic, canfd):
+    """The logger has one CAN channel: only one mode may be enabled."""
+    classic_on = isinstance(classic, dict) and classic.get("enabled") is True
+    fd_on = isinstance(canfd, dict) and canfd.get("enabled") is True
+    require(
+        not (classic_on and fd_on),
+        "Classic CAN and CAN FD are both enabled. This logger has one CAN "
+        "channel, so only one mode can be active. Set one of them to Disable."
+    )
+    
 def validate_complete_config(data):
     """
     Validate the overall configuration structure.

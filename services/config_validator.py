@@ -53,6 +53,74 @@ def validate_rule(rule):
     else:
         parse_can_id(rule["match_id"], ext)
         parse_can_id(rule["mask"], ext)
+
+# ---------------------------------------------------------------------------
+# Two enabled filters must not match the same CAN identifier
+# ---------------------------------------------------------------------------
+def _rule_patterns(rule):
+    """Turn a filter into ('m', match, mask) and ('r', start, end) pieces."""
+    ext = rule["extended_id"]
+    full = 0x1FFFFFFF if ext else 0x7FF
+    kind = rule["type"]
+    if kind == "id_list":
+        return [("m", parse_can_id(v, ext), full) for v in rule["ids"]]
+    if kind == "id_range":
+        return [("r", parse_can_id(rule["id_start"], ext),
+                      parse_can_id(rule["id_end"], ext))]
+    return [("m", parse_can_id(rule["match_id"], ext),
+                  parse_can_id(rule["mask"], ext))]
+
+
+def _range_blocks(start, end):
+    """Split [start, end] into aligned blocks (base, size)."""
+    while start <= end:
+        size = (start & -start) if start else 1 << 30
+        while start + size - 1 > end:
+            size >>= 1
+        yield start, size
+        start += size
+
+
+def _patterns_overlap(p, q):
+    if p[0] == "r" and q[0] == "r":
+        return p[1] <= q[2] and q[1] <= p[2]
+    if p[0] == "m" and q[0] == "m":
+        return ((p[1] ^ q[1]) & p[2] & q[2]) == 0
+    r, m = (p, q) if p[0] == "r" else (q, p)
+    for base, size in _range_blocks(r[1], r[2]):
+        if ((base ^ m[1]) & m[2] & ~(size - 1)) == 0:
+            return True
+    return False
+
+
+def _rules_overlap(a, b):
+    if a["extended_id"] != b["extended_id"]:
+        return False
+    pa, pb = _rule_patterns(a), _rule_patterns(b)
+    if a["type"] == "id_list" and b["type"] == "id_list":
+        return bool({p[1] for p in pa} & {q[1] for q in pb})
+    return any(_patterns_overlap(p, q) for p in pa for q in pb)
+
+
+def find_identifier_conflict(rules):
+    """Names of the first two enabled filters sharing an identifier, or None."""
+    active = [r for r in rules if r["enabled"]]
+    for i, a in enumerate(active):
+        for b in active[i + 1:]:
+            if _rules_overlap(a, b):
+                return a["filter_id"], b["filter_id"]
+    return None
+
+
+def find_conflict_with(rule, others):
+    """Name of an enabled filter in 'others' that shares an identifier."""
+    if not rule["enabled"]:
+        return None
+    for b in others:
+        if b["enabled"] and _rules_overlap(rule, b):
+            return b["filter_id"]
+    return None
+
 def validate_log_config(data):
     check_keys(data, "filters triggers logging", "Log configuration")
 

@@ -36,19 +36,19 @@ def make_valid_config():
         "app": "CAN Configuration Tool",
         "version": 1,
         "classic_can": {
-            "bitrate": "500 kbits/s",
+            "bitrate": "500.000 kbits/s",
             "sampling_point": "75%",
             "sjw": "1",
             "enabled": True
         },
         "canfd": {
             "arbitration_bitrate": "500 kbits/s",
-            "arbitration_sp": "80.00%",
+            "arbitration_sp": "80%",
             "arbitration_sjw": "1",
             "data_bitrate": "2000 kbits/s",
             "data_sp": "80.00%",
             "data_sjw": "1",
-            "enabled": True
+            "enabled": False
         },
         **log_config
     }

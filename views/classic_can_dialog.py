@@ -294,13 +294,16 @@ class ClassicCANSettingsDialog(QWidget):
             )
             
     def on_cancel(self):
-        """Cancel: discard form edits and reload last applied settings."""
+        """Cancel: go back to the last saved settings of this window."""
+        saved = getattr(self, "_saved_settings", None)
+        if self.parent_window is not None and saved is not None:
+            self.parent_window.classic_can_settings = dict(saved)
+            self.parent_window.classic_can_enabled = saved.get("enabled", False)
         self.load_from_parent()
         if self.parent_window is not None:
             self.parent_window.statusBar().showMessage(
                 "Classic CAN changes cancelled", 3000
             )
-
     def apply_to_parent(self):
         settings = self._collect_settings()
         if self.parent_window is not None:

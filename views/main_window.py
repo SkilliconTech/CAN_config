@@ -134,6 +134,9 @@ class ConfigurationTool(QMainWindow):
     @classic_can_settings.setter
     def classic_can_settings(self, settings):
         self.controller.update_classic_can(settings)
+        if settings.get("enabled"):
+            self._turn_off_other_mode("canfd")
+        self._refresh_mode_display()
 
     
     @property
@@ -143,7 +146,9 @@ class ConfigurationTool(QMainWindow):
     @canfd_settings.setter
     def canfd_settings(self, settings):
         self.controller.update_canfd(settings)
-
+        if settings.get("enabled"):
+            self._turn_off_other_mode("classic")
+        self._refresh_mode_display()
 
 
     def __init__(self):

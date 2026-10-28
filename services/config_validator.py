@@ -314,7 +314,7 @@ def validate_complete_config(data):
     validate_classic_can(data["classic_can"])
     if "canfd" in data:
         validate_canfd(data["canfd"])
-    validate_can_mode(data["classic_can"], data.get("canfd", {}))
+    
 
     from models.config_model import default_log_config
 

@@ -1312,7 +1312,10 @@ class ConfigurationTool(QMainWindow):
             return self.canfd_page.has_pending_changes()
         if current == "Triggers":
             return self.log_pages.has_pending_triggers()
+        if current == "Log Files":
+            return self.log_pages.has_pending_logfiles()
         return False
+        
 
     def _confirm_leave_page(self):
         """True if it is OK to leave the open page."""

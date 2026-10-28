@@ -1,6 +1,6 @@
 # Default Classic CAN settings
 DEFAULT_CLASSIC_CAN = {
-    "bitrate": "100.000 kbits/s",
+    "bitrate": "500.000 kbits/s",
     "sampling_point": "75%",
     "sjw": "1",
     "enabled": False,

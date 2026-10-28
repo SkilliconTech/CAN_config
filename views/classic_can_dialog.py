@@ -66,6 +66,7 @@ class ClassicCANSettingsDialog(QWidget):
             "500.000 kbits/s, 75%",
             "1.000 Mbits/s, 75%",
         ])
+        self.bitrate_combo.setCurrentText("500.000 kbits/s, 75%")
 
         bitrate_layout.addWidget(bitrate_label)
         bitrate_layout.addWidget(self.bitrate_combo, 1)
@@ -199,7 +200,7 @@ class ClassicCANSettingsDialog(QWidget):
 
     def _restore_settings(self):
         target = (
-            f"{self.settings.get('bitrate', '50.000 kbits/s')}, "
+            f"{self.settings.get('bitrate', '500.000 kbits/s')}, "
             f"{self.settings.get('sampling_point', '75%')}"
         )
 

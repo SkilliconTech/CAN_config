@@ -1,0 +1,54 @@
+{
+    "app": "CAN Configuration Tool",
+    "version": 1,
+    "classic_can": {
+        "bitrate": "125.000 kbits/s",
+        "sampling_point": "75%",
+        "sjw": "2",
+        "enabled": false
+    },
+    "canfd": {
+        "arbitration_bitrate": "1000 kbits/s",
+        "arbitration_sp": "80%",
+        "arbitration_sjw": "6",
+        "data_bitrate": "500 kbits/s",
+        "data_sp": "80.00%",
+        "data_sjw": "1",
+        "enabled": true
+    },
+    "filters": {
+        "mode": "all",
+        "combine": "or",
+        "rules": [
+            {
+                "filter_id": "F1",
+                "enabled": true,
+                "type": "id_list",
+                "extended_id": false,
+                "ids": [
+                    "0x123"
+                ]
+            }
+        ]
+    },
+    "triggers": {
+        "start": {
+            "type": "power_on"
+        },
+        "stop": {
+            "type": "none"
+        },
+        "rearm_after_stop": false
+    },
+    "logging": {
+        "formats": [
+            "asc"
+        ],
+        "file_split_size_bytes": 104857600,
+        "file_split_time_seconds": 1800,
+        "split_policy": "first_limit_reached",
+        "on_sd_full": "stop",
+        "on_write_error": "stop",
+        "overwrite_existing": false
+    }
+}

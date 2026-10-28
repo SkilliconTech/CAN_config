@@ -2,18 +2,18 @@
     "app": "CAN Configuration Tool",
     "version": 1,
     "classic_can": {
-        "bitrate": "125.000 kbits/s",
+        "bitrate": "250.000 kbits/s",
         "sampling_point": "75%",
-        "sjw": "2",
-        "enabled": false
+        "sjw": "3",
+        "enabled": true
     },
     "canfd": {
         "arbitration_bitrate": "1000 kbits/s",
         "arbitration_sp": "80%",
-        "arbitration_sjw": "6",
-        "data_bitrate": "500 kbits/s",
+        "arbitration_sjw": "5",
+        "data_bitrate": "2000 kbits/s",
         "data_sp": "80.00%",
-        "data_sjw": "1",
+        "data_sjw": "8",
         "enabled": true
     },
     "filters": {

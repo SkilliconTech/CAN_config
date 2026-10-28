@@ -293,11 +293,18 @@ class ClassicCANSettingsDialog(QWidget):
             self.parent_window.statusBar().showMessage(
                 "Classic CAN changes cancelled", 3000
             )
+
+    def has_pending_changes(self):
+        """True if the form was edited but not applied/saved yet."""
+        baseline = getattr(self, "_form_baseline", None)
+        return baseline is not None and self._collect_settings() != baseline
+    
     def apply_to_parent(self):
         settings = self._collect_settings()
         if self.parent_window is not None:
             self.parent_window.classic_can_settings = dict(settings)
             self.parent_window.classic_can_enabled = settings["enabled"]
+        self._form_baseline = dict(settings)    # form state at the last apply
 
     def load_from_parent(self):
         if self.parent_window is None:
@@ -314,6 +321,8 @@ class ClassicCANSettingsDialog(QWidget):
 
         # remember the last saved state of this window (Cancel goes back to it)
         self._saved_settings = dict(self.settings)
+        # remember how the form looks now (used to detect unsaved edits)
+        self._form_baseline = dict(self._collect_settings())
 
     def set_theme(self, c):
         """Match light/dark colors used by Log Configuration."""

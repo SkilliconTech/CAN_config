@@ -601,9 +601,10 @@ class ConfigurationTool(QMainWindow):
 
     def _confirm_discard_changes(self):
         """Ask 'Save your changes?'. Returns True if it is OK to continue."""
+        if not self._confirm_leave_page():      # edits on the open page
+            return False
         if not self._has_unsaved_changes():
             return True
-
         answer = QMessageBox.question(
             self, "Unsaved changes", "Save your changes?",
             QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
@@ -1299,6 +1300,47 @@ class ConfigurationTool(QMainWindow):
         bus_item.setExpanded(False)
         self._refresh_mode_display()
         self.new_tree.setVisible(True)
+
+    # ------------------------------------------------------------------
+    # Block leaving a page that has edits not applied/saved yet
+    # ------------------------------------------------------------------
+    def _page_has_pending_changes(self):
+        current = getattr(self, "_current_page", None)
+        if current == "Classic CAN":
+            return self.classic_can_page.has_pending_changes()
+        if current == "CAN FD":
+            return self.canfd_page.has_pending_changes()
+        if current == "Triggers":
+            return self.log_pages.has_pending_triggers()
+        return False
+
+    def _confirm_leave_page(self):
+        """True if it is OK to leave the open page."""
+        if not self._page_has_pending_changes():
+            return True
+
+        QMessageBox.information(
+            self, "Apply or save your changes",
+            f"You changed settings in {self._current_page} but did not "
+            "apply or save them.\n\n"
+            "Please click Apply or Save on this page first.\n"
+            "(Click Cancel on the page if you do not want the changes.)"
+        )
+        return False
+
+    def _reselect_current_page(self):
+        """Put the tree highlight back on the page that stays open."""
+        current = getattr(self, "_current_page", None)
+        if current is None:
+            return
+        stack = [self.new_tree.topLevelItem(i)
+                 for i in range(self.new_tree.topLevelItemCount())]
+        while stack:
+            node = stack.pop()
+            if (node.data(0, Qt.UserRole) or node.text(0)) == current:
+                self.new_tree.setCurrentItem(node)
+                return
+            stack.extend(node.child(i) for i in range(node.childCount()))
     
     
     def on_tree_item_clicked(self, item, column):
@@ -1308,8 +1350,14 @@ class ConfigurationTool(QMainWindow):
 
         name = item.data(0, Qt.UserRole) or item.text(0)
 
+        # edits on the open page not applied/saved yet?
+        if not self._confirm_leave_page():
+            self._reselect_current_page()
+            return
+
         page = LOG_PAGES.get(name)
         if page:
+            self._current_page = name
             self.title_label.setText(name)
             self.content_stack.setVisible(True)
             self.content_stack.setCurrentWidget(self.log_pages)
@@ -1317,6 +1365,7 @@ class ConfigurationTool(QMainWindow):
             return
 
         if name == "Classic CAN":
+            self._current_page = name
             self.title_label.setText("Classic CAN")
             self.classic_can_page.load_from_parent()
             self.content_stack.setVisible(True)
@@ -1324,6 +1373,7 @@ class ConfigurationTool(QMainWindow):
             return
 
         if name == "CAN FD":
+            self._current_page = name
             self.title_label.setText("CAN FD")
             self.canfd_page.load_from_parent()
             self.content_stack.setVisible(True)

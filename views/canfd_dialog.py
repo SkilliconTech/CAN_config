@@ -300,10 +300,17 @@ class CANFDSettingsDialog(QWidget):
             "data_sjw": self.data_sjw_combo.currentText(),
             "enabled": self.enable_radio.isChecked(),
         }
-
+    
+    def has_pending_changes(self):
+        """True if the form was edited but not applied/saved yet."""
+        baseline = getattr(self, "_form_baseline", None)
+        return baseline is not None and self._collect_settings() != baseline
+    
     def apply_to_parent(self):
+        settings = self._collect_settings()
         if self.parent_window is not None:
-            self.parent_window.canfd_settings = self._collect_settings()
+            self.parent_window.canfd_settings = dict(settings)
+        self._form_baseline = dict(settings)    # what the page looked like when applied
 
     def on_apply(self):
         """Apply: update the app only (no file write)."""
@@ -343,6 +350,8 @@ class CANFDSettingsDialog(QWidget):
 
         # remember the last saved state of this window (Cancel goes back to it)
         self._saved_settings = dict(self.settings)
+        # remember how the form looks now (used to detect unsaved edits)
+        self._form_baseline = dict(self._collect_settings())
 
     def set_theme(self, c):
         """Match light/dark colors used by Log Configuration."""

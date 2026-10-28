@@ -289,6 +289,7 @@ class LogConfigWidget(QStackedWidget):
         self.duration.setValue(triggers["stop"].get("seconds", 600))
         self.rearm.setChecked(triggers["rearm_after_stop"])
         self.update_controls()
+        self._trigger_baseline = self._triggers_from_widgets()
 
     def load_triggers(self):
         """Called when the Triggers page opens."""
@@ -311,9 +312,15 @@ class LogConfigWidget(QStackedWidget):
             return False
 
         self._applied_triggers = triggers
+        self._trigger_baseline = copy.deepcopy(triggers)
         self.notify_configuration_changed()
         return True
 
+    def has_pending_triggers(self):
+        """True if the trigger form was edited but not applied/saved yet."""
+        baseline = getattr(self, "_trigger_baseline", None)
+        return baseline is not None and self._triggers_from_widgets() != baseline
+    
     def on_trigger_apply(self):
         if self._apply_triggers():
             self.show_status("Trigger settings applied")

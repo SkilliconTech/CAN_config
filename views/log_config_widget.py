@@ -55,6 +55,9 @@ class LogConfigWidget(QStackedWidget):
         self.rules = []
         self._applied_triggers = None    # triggers currently in the configuration
         self._saved_triggers = None      # last saved state (Cancel goes back to it)
+        self._applied_logging = None     # log file settings in the configuration
+        self._saved_logging = None       # last saved log file settings
+        self._logging_baseline = None    # form state at the last apply/load
 
 
         # ---------------- Filters page ----------------
@@ -156,14 +159,17 @@ class LogConfigWidget(QStackedWidget):
 
         # ---------------- Log Files page ----------------
         page = QWidget()
-        form = QFormLayout(page)
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(0, 0, 0, 0)
+
+        form = QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
+        page_layout.addLayout(form)
 
         self.asc = CheckStyleCheckBox("ASC")
         self.mf4 = CheckStyleCheckBox("MF4 (ASAM MDF 4)")
         self.size_limit = make_spin(1, 100, " MB")
         self.time_limit = make_spin(0, 60, " minutes")
-        self.time_limit.setSpecialValueText("Disabled")
         self.time_limit.setSpecialValueText("Disabled")
 
         # Keep the exact values loaded from a file unless the user edits them
@@ -182,6 +188,22 @@ class LogConfigWidget(QStackedWidget):
             "Never overwrite existing logs. MF4 requests a real MDF 4 writer in "
             "firmware; renaming ASC does not create MF4."
         ))
+
+        # Apply / Save: pinned to the bottom right of the page
+        logfile_buttons = QHBoxLayout()
+        logfile_buttons.addStretch(1)
+        self.logfile_apply_button = QPushButton("Apply")
+        self.logfile_save_button = QPushButton("Save")
+        self.logfile_apply_button.setToolTip("Use these settings in the app now")
+        self.logfile_save_button.setToolTip("Keep the changes made in this window")
+        self.logfile_apply_button.clicked.connect(self.on_logfile_apply)
+        self.logfile_save_button.clicked.connect(self.on_logfile_save)
+        logfile_buttons.addWidget(self.logfile_apply_button)
+        logfile_buttons.addWidget(self.logfile_save_button)
+
+        page_layout.addStretch(1)              # pushes the buttons down
+        page_layout.addLayout(logfile_buttons)
+
         self.addWidget(page)
 
         # ---------------- JSON Preview page ----------------
@@ -213,24 +235,20 @@ class LogConfigWidget(QStackedWidget):
 
         self.apply(default_log_config())
 
-        # Notify when logging controls change.
-        # (The trigger controls are not listed here: they use
-        # Apply / Save / Cancel instead.)
+        # Notify when the filter mode changes.
+        # (Trigger and log file controls are not listed here: they use
+        # Apply / Save instead.)
         self.filter_mode.currentIndexChanged.connect(
             self.notify_configuration_changed
         )
-
-        for checkbox in (self.asc, self.mf4):
-            checkbox.toggled.connect(self.notify_configuration_changed)
-
-        for spinbox in (self.size_limit, self.time_limit):
-            spinbox.valueChanged.connect(self.notify_configuration_changed)
 
     # ---------------- page switching ----------------
     def show_page(self, name):
         self.setCurrentIndex(self.PAGES.index(name))
         if name == "triggers":
             self.load_triggers()        # show the last applied settings
+        if name == "logfiles":
+            self.load_logfiles()        # show the last applied settings
         if name == "preview":
             self.refresh_preview()
 
@@ -338,6 +356,88 @@ class LogConfigWidget(QStackedWidget):
         self.notify_configuration_changed()
         self.show_status("Trigger changes cancelled")
 
+    # ---------------- Log files: Apply / Save ----------------
+    def _logging_from_widgets(self):
+        """Read the Log Files form as it is on screen right now."""
+        size_bytes = (
+            self._size_bytes_loaded
+            if self._size_bytes_loaded is not None
+            else self.size_limit.value() * 1024 * 1024
+        )
+        time_seconds = (
+            self._time_seconds_loaded
+            if self._time_seconds_loaded is not None
+            else self.time_limit.value() * 60
+        )
+        return {
+            "formats": [name for name, w in [("asc", self.asc),
+                                              ("mf4", self.mf4)]
+                        if w.isChecked()],
+            "file_split_size_bytes": size_bytes,
+            "file_split_time_seconds": time_seconds,
+        }
+
+    def _load_logging_into_widgets(self, log_settings):
+        """Show the given log file settings in the form."""
+        self.asc.setChecked("asc" in log_settings["formats"])
+        self.mf4.setChecked("mf4" in log_settings["formats"])
+
+        size_bytes = log_settings["file_split_size_bytes"]
+        time_seconds = log_settings["file_split_time_seconds"]
+
+        self.size_limit.setValue(max(1, round(size_bytes / (1024 * 1024))))
+        self.time_limit.setValue(
+            0 if time_seconds == 0 else max(1, round(time_seconds / 60))
+        )
+
+        # setValue above counts as an "edit", so remember the exact values
+        # AFTER it
+        self._size_bytes_loaded = size_bytes
+        self._time_seconds_loaded = time_seconds
+        self.time_limit.setToolTip(f"Stored value: {time_seconds} seconds")
+        self.size_limit.setToolTip(f"Stored value: {size_bytes} bytes")
+
+        self._logging_baseline = self._logging_from_widgets()
+
+    def load_logfiles(self):
+        """Called when the Log Files page opens."""
+        if self._applied_logging is None:
+            return
+        self._load_logging_into_widgets(self._applied_logging)
+        self._saved_logging = copy.deepcopy(self._applied_logging)
+
+    def has_pending_logfiles(self):
+        """True if the form was edited but not applied/saved yet."""
+        baseline = getattr(self, "_logging_baseline", None)
+        return baseline is not None and self._logging_from_widgets() != baseline
+
+    def _apply_logging(self):
+        """Check the form and put it into the configuration."""
+        log_settings = self._logging_from_widgets()
+        candidate = self.collect()
+        candidate["logging"].update(log_settings)
+        try:
+            validate_log_config(candidate)
+        except ValueError as error:
+            QMessageBox.warning(
+                self.window(), "Invalid log file settings", str(error)
+            )
+            return False
+
+        self._applied_logging = log_settings
+        self._logging_baseline = copy.deepcopy(log_settings)
+        self.notify_configuration_changed()
+        return True
+
+    def on_logfile_apply(self):
+        if self._apply_logging():
+            self.show_status("Log file settings applied")
+
+    def on_logfile_save(self):
+        if self._apply_logging():
+            self._saved_logging = copy.deepcopy(self._applied_logging)
+            self.show_status("Log file changes saved")
+
     def notify_configuration_changed(self):
         self.configuration_changed.emit()
         
@@ -353,22 +453,11 @@ class LogConfigWidget(QStackedWidget):
             if self._applied_triggers is not None
             else self._triggers_from_widgets()
         )
-        size_bytes = (
-            self._size_bytes_loaded
-            if self._size_bytes_loaded is not None
-            else self.size_limit.value() * 1024 * 1024
-        )
-        time_seconds = (
-            self._time_seconds_loaded
-            if self._time_seconds_loaded is not None
-            else self.time_limit.value() * 60
-        )
-        data["logging"].update(
-            formats=[name for name, w in [("asc", self.asc), ("mf4", self.mf4)]
-                     if w.isChecked()],
-            file_split_size_bytes=size_bytes,
-            file_split_time_seconds=time_seconds,
-        )
+        data["logging"].update(copy.deepcopy(
+            self._applied_logging
+            if self._applied_logging is not None
+            else self._logging_from_widgets()
+        ))
         return data
 
     def apply(self, data):
@@ -396,22 +485,14 @@ class LogConfigWidget(QStackedWidget):
         self._applied_triggers = copy.deepcopy(data["triggers"])
         self._saved_triggers = copy.deepcopy(data["triggers"])
 
-        self.asc.setChecked("asc" in data["logging"]["formats"])
-        self.mf4.setChecked("mf4" in data["logging"]["formats"])
-        size_bytes = data["logging"]["file_split_size_bytes"]
-        time_seconds = data["logging"]["file_split_time_seconds"]
-
-        self.size_limit.setValue(max(1, round(size_bytes / (1024 * 1024))))
-        self.time_limit.setValue(
-            0 if time_seconds == 0 else max(1, round(time_seconds / 60))
-        )
-
-        # setValue above counts as an "edit", so remember the exact values
-        # AFTER it
-        self._size_bytes_loaded = size_bytes
-        self._time_seconds_loaded = time_seconds
-        self.time_limit.setToolTip(f"Stored value: {time_seconds} seconds")
-        self.size_limit.setToolTip(f"Stored value: {size_bytes} bytes")
+        log_settings = {
+            "formats": list(data["logging"]["formats"]),
+            "file_split_size_bytes": data["logging"]["file_split_size_bytes"],
+            "file_split_time_seconds": data["logging"]["file_split_time_seconds"],
+        }
+        self._load_logging_into_widgets(log_settings)
+        self._applied_logging = copy.deepcopy(log_settings)
+        self._saved_logging = copy.deepcopy(log_settings)
 
         self.update_controls()
         if self.currentIndex() == self.PAGES.index("preview"):

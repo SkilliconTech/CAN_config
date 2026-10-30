@@ -408,26 +408,21 @@ class ConfigurationTool(QMainWindow):
 
         topbar = QHBoxLayout()
 
-        self.title_label = QLabel(
-            "Configuration Tool"
+        # The heading and the two switches live in one group,
+        # so they always stay side by side.
+        title_group = QWidget()
+        title_row = QHBoxLayout(title_group)
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(8)          # gap between the heading and the switch
+
+        self.title_label = QLabel("Configuration Tool")
+        self.title_label.setFont(QFont(FONT_FAMILY, 21, QFont.Bold))
+        self.title_label.setSizePolicy(
+            QSizePolicy.Maximum, QSizePolicy.Preferred
         )
+        title_row.addWidget(self.title_label, 0, Qt.AlignVCenter)
 
-        title_font = QFont(
-            FONT_FAMILY,
-            21,
-            QFont.Bold
-         )
-
-        self.title_label.setFont(
-            title_font
-        )
-
-        topbar.addWidget(
-            self.title_label
-        )
-
-        # Editing switches: shown next to the title on Filters and Triggers
-        self.lock_label = QLabel("Editing: OFF (locked)")
+        # Editing switches: shown next to the heading on Filters and Triggers
         self.filters_switch = SlideSwitch()
         self.triggers_switch = SlideSwitch()
         self.filters_switch.setToolTip("Switch on to add or change filters")
@@ -438,15 +433,12 @@ class ConfigurationTool(QMainWindow):
         self.triggers_switch.toggled.connect(
             lambda on: self._on_lock_toggled("triggers", on)
         )
-
-        topbar.addSpacing(18)
-        topbar.addWidget(self.lock_label)
-        topbar.addSpacing(8)
-        topbar.addWidget(self.filters_switch)
-        topbar.addWidget(self.triggers_switch)
-        for widget in (self.lock_label, self.filters_switch,
-                       self.triggers_switch):
+        title_row.addWidget(self.filters_switch, 0, Qt.AlignVCenter)
+        title_row.addWidget(self.triggers_switch, 0, Qt.AlignVCenter)
+        for widget in (self.filters_switch, self.triggers_switch):
             widget.setVisible(False)
+
+        topbar.addWidget(title_group)
         topbar.addStretch(1)
 
 
@@ -1377,22 +1369,11 @@ class ConfigurationTool(QMainWindow):
     # ------------------------------------------------------------------
     def _on_lock_toggled(self, page, on):
         self.log_pages.set_unlocked(page, on)
-        self._update_lock_label(page)
-
-    def _update_lock_label(self, page):
-        if self.log_pages.is_unlocked(page):
-            self.lock_label.setText("Editing: ON")
-        else:
-            self.lock_label.setText("Editing: OFF (locked)")
 
     def _show_lock_switch(self, page):
         """page is 'filters' or 'triggers'. Anything else hides both."""
         self.filters_switch.setVisible(page == "filters")
         self.triggers_switch.setVisible(page == "triggers")
-        show = page in ("filters", "triggers")
-        self.lock_label.setVisible(show)
-        if show:
-            self._update_lock_label(page)
 
 
     def on_tree_item_clicked(self, item, column):
@@ -1579,9 +1560,7 @@ class ConfigurationTool(QMainWindow):
         )
         for switch in (self.filters_switch, self.triggers_switch):
             switch.set_colors(c['accent_blue'], c['btn_border'], "#FFFFFF")
-        self.lock_label.setStyleSheet(
-            f"color: {c['text_secondary']}; font-size: 10pt; font-weight: 600;"
-        )
+        
 
         
         self.theme_toggle.setStyleSheet(

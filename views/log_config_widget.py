@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QObject, QEvent, QTimer
 import json
 import copy
 
@@ -20,7 +20,9 @@ from PySide6.QtWidgets import (
     QComboBox,
     QSpinBox,
     QMessageBox,
-    QDialog
+    QDialog,
+    QAbstractButton,
+    QAbstractSpinBox
 )
 from models.config_model import default_log_config
 
@@ -43,6 +45,41 @@ from resources.spin_style import spinbox_stylesheet
 from views.check_radio import CheckStyleCheckBox
 from PySide6.QtGui import QFont
 
+class LockGuard(QObject):
+    """Blocks clicks and typing on widgets while their page is locked."""
+
+    def __init__(self, owner, page, only_double_click=False):
+        super().__init__(owner)
+        self.owner = owner
+        self.page = page
+        self.only_double_click = only_double_click
+
+    def eventFilter(self, obj, event):
+        if self.owner.is_unlocked(self.page):
+            return False
+
+        kind = event.type()
+
+        if self.only_double_click:
+            if kind == QEvent.MouseButtonDblClick:
+                self.owner.warn_locked(self.page)
+                return True
+            return False
+
+        if kind in (QEvent.MouseButtonPress, QEvent.MouseButtonDblClick):
+            self.owner.warn_locked(self.page)
+            return True
+
+        if kind in (QEvent.MouseButtonRelease, QEvent.Wheel,
+                    QEvent.KeyRelease, QEvent.ContextMenu):
+            return True
+
+        if kind == QEvent.KeyPress and event.key() not in (
+                Qt.Key_Tab, Qt.Key_Backtab):
+            return True
+
+        return False
+    
 class LogConfigWidget(QStackedWidget):
     configuration_changed = Signal()
     generate_requested = Signal()
@@ -53,6 +90,8 @@ class LogConfigWidget(QStackedWidget):
         self.get_full_config = get_full_config
         self.show_status = show_status
         self.rules = []
+        self._unlocked = {"filters": False, "triggers": False}   # locked at start
+        self._warning_open = False
         self._applied_triggers = None    # triggers currently in the configuration
         self._saved_triggers = None      # last saved state (Cancel goes back to it)
         self._applied_logging = None     # log file settings in the configuration
@@ -241,6 +280,7 @@ class LogConfigWidget(QStackedWidget):
         self.filter_mode.currentIndexChanged.connect(
             self.notify_configuration_changed
         )
+        self._install_lock_guards()
 
     # ---------------- page switching ----------------
     def show_page(self, name):
@@ -437,6 +477,50 @@ class LogConfigWidget(QStackedWidget):
         if self._apply_logging():
             self._saved_logging = copy.deepcopy(self._applied_logging)
             self.show_status("Log file changes saved")
+
+    # ---------------- Editing lock (Filters / Triggers) ----------------
+    def is_unlocked(self, page):
+        return self._unlocked.get(page, True)
+
+    def set_unlocked(self, page, value):
+        self._unlocked[page] = bool(value)
+
+    def warn_locked(self, page):
+        """Red warning popup shown when a locked control is clicked."""
+        if self._warning_open:
+            return
+        self._warning_open = True
+
+        def show():
+            title = "Filters" if page == "filters" else "Triggers"
+            QMessageBox.critical(
+                self.window(),
+                f"{title} are locked",
+                f"{title} are locked, so nothing can be added or changed.\n\n"
+                "Switch on 'Editing' next to the page title to unlock them."
+            )
+            self._warning_open = False
+
+        QTimer.singleShot(0, show)
+
+    def _install_lock_guards(self):
+        """Block clicks on the Filters and Triggers controls while locked."""
+        filters_page = self.widget(self.PAGES.index("filters"))
+        triggers_page = self.widget(self.PAGES.index("triggers"))
+
+        filters_guard = LockGuard(self, "filters")
+        for kind in (QComboBox, QPushButton):
+            for widget in filters_page.findChildren(kind):
+                widget.installEventFilter(filters_guard)
+
+        # double-clicking a filter row opens the edit dialog: block it too
+        table_guard = LockGuard(self, "filters", only_double_click=True)
+        self.table.viewport().installEventFilter(table_guard)
+
+        triggers_guard = LockGuard(self, "triggers")
+        for kind in (QComboBox, QLineEdit, QAbstractSpinBox, QAbstractButton):
+            for widget in triggers_page.findChildren(kind):
+                widget.installEventFilter(triggers_guard)
 
     def notify_configuration_changed(self):
         self.configuration_changed.emit()

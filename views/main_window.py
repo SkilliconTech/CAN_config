@@ -88,6 +88,7 @@ from views.log_config_widget import LogConfigWidget
 from views.tree_delegate import ModernTreeDelegate
 from app.controller import AppController
 from services.config_repository import JsonConfigurationRepository
+from views.slide_switch import SlideSwitch
 
 
 class NewFileDelegate(QStyledItemDelegate):
@@ -425,6 +426,27 @@ class ConfigurationTool(QMainWindow):
             self.title_label
         )
 
+        # Editing switches: shown next to the title on Filters and Triggers
+        self.lock_label = QLabel("Editing: OFF (locked)")
+        self.filters_switch = SlideSwitch()
+        self.triggers_switch = SlideSwitch()
+        self.filters_switch.setToolTip("Switch on to add or change filters")
+        self.triggers_switch.setToolTip("Switch on to change triggers")
+        self.filters_switch.toggled.connect(
+            lambda on: self._on_lock_toggled("filters", on)
+        )
+        self.triggers_switch.toggled.connect(
+            lambda on: self._on_lock_toggled("triggers", on)
+        )
+
+        topbar.addSpacing(18)
+        topbar.addWidget(self.lock_label)
+        topbar.addSpacing(8)
+        topbar.addWidget(self.filters_switch)
+        topbar.addWidget(self.triggers_switch)
+        for widget in (self.lock_label, self.filters_switch,
+                       self.triggers_switch):
+            widget.setVisible(False)
         topbar.addStretch(1)
 
 
@@ -1349,7 +1371,30 @@ class ConfigurationTool(QMainWindow):
                 return
             stack.extend(node.child(i) for i in range(node.childCount()))
     
-    
+
+    # ------------------------------------------------------------------
+    # Editing switches (Filters / Triggers)
+    # ------------------------------------------------------------------
+    def _on_lock_toggled(self, page, on):
+        self.log_pages.set_unlocked(page, on)
+        self._update_lock_label(page)
+
+    def _update_lock_label(self, page):
+        if self.log_pages.is_unlocked(page):
+            self.lock_label.setText("Editing: ON")
+        else:
+            self.lock_label.setText("Editing: OFF (locked)")
+
+    def _show_lock_switch(self, page):
+        """page is 'filters' or 'triggers'. Anything else hides both."""
+        self.filters_switch.setVisible(page == "filters")
+        self.triggers_switch.setVisible(page == "triggers")
+        show = page in ("filters", "triggers")
+        self.lock_label.setVisible(show)
+        if show:
+            self._update_lock_label(page)
+
+
     def on_tree_item_clicked(self, item, column):
         if item.childCount() > 0:
             item.setExpanded(not item.isExpanded())
@@ -1366,6 +1411,7 @@ class ConfigurationTool(QMainWindow):
         if page:
             self._current_page = name
             self.title_label.setText(name)
+            self._show_lock_switch(page) 
             self.content_stack.setVisible(True)
             self.content_stack.setCurrentWidget(self.log_pages)
             self.log_pages.show_page(page)
@@ -1374,6 +1420,7 @@ class ConfigurationTool(QMainWindow):
         if name == "Classic CAN":
             self._current_page = name
             self.title_label.setText("Classic CAN")
+            self._show_lock_switch(None)  
             self.classic_can_page.load_from_parent()
             self.content_stack.setVisible(True)
             self.content_stack.setCurrentWidget(self.classic_can_page)
@@ -1382,6 +1429,7 @@ class ConfigurationTool(QMainWindow):
         if name == "CAN FD":
             self._current_page = name
             self.title_label.setText("CAN FD")
+            self._show_lock_switch(None)    
             self.canfd_page.load_from_parent()
             self.content_stack.setVisible(True)
             self.content_stack.setCurrentWidget(self.canfd_page)
@@ -1528,6 +1576,11 @@ class ConfigurationTool(QMainWindow):
 
         self.title_label.setStyleSheet(
             f"color: {c['text_primary']};"
+        )
+        for switch in (self.filters_switch, self.triggers_switch):
+            switch.set_colors(c['accent_blue'], c['btn_border'], "#FFFFFF")
+        self.lock_label.setStyleSheet(
+            f"color: {c['text_secondary']}; font-size: 10pt; font-weight: 600;"
         )
 
         

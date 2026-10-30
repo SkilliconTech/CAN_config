@@ -1,10 +1,10 @@
 from models.config_model import ConfigurationModel
 from services.config_validator import (
     validate_log_config,
-    validate_complete_config
+    validate_complete_config,
 )
 from core.repository_interface import ConfigurationRepository
-from services.config_version import check_config_version
+from services.can_timing import normalize_shared_timing
 
 
 class AppController:
@@ -14,49 +14,50 @@ class AppController:
         self.repository = repository
 
     def save_configuration(self, path, data):
-        """
-        Validate configuration and save it to disk.
-        """
+        validate_complete_config(data)
 
-        log_config = {
-            key: data[key]
-            for key in ("filters", "triggers", "logging")
-        }
+        self.repository.save(
+            path,
+            normalize_shared_timing(data),
+        )
 
-        validate_log_config(log_config)      
-        self.repository.save(path, data)
-
-       
     def load_configuration(self, path):
         data = self.repository.load(path)
 
         validate_complete_config(data)
 
-        return data
+        return normalize_shared_timing(data)
+
+    def update_bus_settings(self, classic, canfd):
+        data = normalize_shared_timing({
+            "classic_can": classic,
+            "canfd": canfd,
+        })
+
+        self.model.set_classic_can(data["classic_can"])
+        self.model.set_canfd(data["canfd"])
 
     def update_classic_can(self, settings):
-     self.model.set_classic_can(settings)
-
+        self.update_bus_settings(
+            settings,
+            self.model.get_canfd(),
+        )
 
     def get_classic_can(self):
-     return self.model.get_classic_can()
-    
+        return self.model.get_classic_can()
+
     def update_canfd(self, settings):
-        self.model.set_canfd(settings)
+        self.update_bus_settings(
+            self.model.get_classic_can(),
+            settings,
+        )
 
     def get_canfd(self):
         return self.model.get_canfd()
 
     def update_logging_config(self, settings):
-        """
-        Validate and update logging settings.
-        """
         validate_log_config(settings)
-
         self.model.set_logging_config(settings)
 
     def get_logging_config(self):
-        """
-        Retrieve logging settings.
-        """
         return self.model.get_logging_config()

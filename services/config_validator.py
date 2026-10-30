@@ -310,6 +310,18 @@ def validate_complete_config(data):
             "CAN FD settings must be a JSON object."
         )
 
+    # Both flags may be true: they select frame types to record.
+    for key in ("classic_can", "canfd"):
+        if key in data and "enabled" in data[key]:
+            check_bool(
+                data[key]["enabled"],
+                f"{key} enabled",
+            )
+
+    from services.can_timing import normalize_shared_timing
+
+    normalize_shared_timing(data)
+
     # NEW: reject incorrect CAN values
     validate_classic_can(data["classic_can"])
     if "canfd" in data:

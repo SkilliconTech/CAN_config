@@ -254,33 +254,50 @@ class CANFDSettingsDialog(QWidget):
         index = combo.findText(text)
         # if the value is not in the list, use the first entry
         combo.setCurrentIndex(index if index >= 0 else 0)
+
     def _restore_settings(self):
         s = self.settings
 
+        # Accept both JSON spellings.
+        # The arbitration dropdown displays "80%".
+        arbitration_sp = s.get("arbitration_sp", "80%")
+
+        if arbitration_sp == "80.00%":
+            arbitration_sp = "80%"
+
+        # Restore arbitration bitrate and sample point.
         self._select(
             self.arbitration_bitrate_combo,
             f"{s.get('arbitration_bitrate', '500 kbits/s')}, "
-            f"{s.get('arbitration_sp', '80.00%')}"
+            f"{arbitration_sp}"
         )
+
+        # Restore arbitration SJW.
         self._select(
             self.arbitration_sjw_combo,
             str(s.get("arbitration_sjw", "1"))
         )
+
+        # Restore data-phase bitrate and sample point.
         self._select(
             self.data_bitrate_combo,
             f"{s.get('data_bitrate', '500 kbits/s')}, "
             f"{s.get('data_sp', '80.00%')}"
         )
+
+        # Restore data-phase SJW.
         self._select(
             self.data_sjw_combo,
             str(s.get("data_sjw", "1"))
         )
 
+        # Restore enabled/disabled state.
         if s.get("enabled", False):
             self.enable_radio.setChecked(True)
         else:
             self.disable_radio.setChecked(True)
 
+        # Refresh the current-settings labels.
         self.update_current_settings()
 
     def _collect_settings(self):

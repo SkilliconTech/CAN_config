@@ -743,30 +743,34 @@ class ConfigurationTool(QMainWindow):
         if not isinstance(data, dict) or not isinstance(
             data.get("classic_can"), dict
         ):
-            raise ValueError("This is not a valid configuration file.")
+            raise ValueError(
+                "This is not a valid configuration file."
+            )
+
         log_data = default_log_config()
+
         for key in ("filters", "triggers", "logging"):
             if key in data:
                 log_data[key] = data[key]
+
         validate_log_config(log_data)
 
-        settings = dict(DEFAULT_CLASSIC_CAN)
-        settings.update(data["classic_can"])
+        classic = dict(DEFAULT_CLASSIC_CAN)
+        classic.update(data["classic_can"])
 
-        self.classic_can_settings = settings
-        self.classic_can_enabled = bool(settings.get("enabled", False))
         canfd = dict(DEFAULT_CANFD)
+
         if isinstance(data.get("canfd"), dict):
             canfd.update(data["canfd"])
-        self.canfd_settings = canfd
-        # Restore logging values into the GUI
+
+        self.controller.update_bus_settings(classic, canfd)
+
+        self.classic_can_enabled = bool(
+            classic.get("enabled", False)
+        )
+
         self.log_pages.apply(log_data)
-
-        # Synchronize logging with the Central Model
-        self.controller.update_logging_config(
-         log_data
-        ) 
-
+        self.controller.update_logging_config(log_data)
     
     
     def _write_json(self, path: str, mark_clean: bool = True) -> bool:

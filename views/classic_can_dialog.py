@@ -85,6 +85,14 @@ class ClassicCANSettingsDialog(QWidget):
         bus_layout.addLayout(sjw_layout)
 
         main_layout.addWidget(bus_group)
+        timing_note = QLabel(
+            "When both CAN modes are enabled, CAN FD arbitration "
+            "settings supply the shared bitrate, sample point "
+            "and SJW. Change shared timing on the CAN FD page."
+        )
+
+        timing_note.setWordWrap(True)
+        main_layout.addWidget(timing_note)
 
         # Current settings
         current_group = QGroupBox("Current settings")
@@ -205,13 +213,13 @@ class ClassicCANSettingsDialog(QWidget):
         )
 
         index = self.bitrate_combo.findText(target)
-        # if the value is not in the list, use the first entry
-        self.bitrate_combo.setCurrentIndex(index if index >= 0 else 0)
 
-        sjw_index = self.sjw_combo.findText(
-            str(self.settings.get("sjw", "1"))
-        )
-        self.sjw_combo.setCurrentIndex(sjw_index if sjw_index >= 0 else 0)
+        self.bitrate_combo.setCurrentIndex(index)
+
+        sjw = str(self.settings.get("sjw", "1"))
+        sjw_index = self.sjw_combo.findText(sjw)
+
+        self.sjw_combo.setCurrentIndex(sjw_index)
     def _collect_settings(self):
         selected = self.bitrate_combo.currentText()
 
@@ -302,10 +310,17 @@ class ClassicCANSettingsDialog(QWidget):
     
     def apply_to_parent(self):
         settings = self._collect_settings()
+
         if self.parent_window is not None:
-            self.parent_window.classic_can_settings = dict(settings)
-            self.parent_window.classic_can_enabled = settings["enabled"]
-        self._form_baseline = dict(settings)    # form state at the last apply
+            self.parent_window.classic_can_settings = dict(
+                settings
+            )
+
+            self.parent_window.classic_can_enabled = (
+                settings["enabled"]
+            )
+
+            self.load_from_parent()
 
     def load_from_parent(self):
         if self.parent_window is None:

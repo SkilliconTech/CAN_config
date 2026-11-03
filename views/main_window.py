@@ -1025,10 +1025,29 @@ class ConfigurationTool(QMainWindow):
         self.imported_list.setCurrentItem(item)
         self.statusBar().showMessage(f"Saved: {path}", 3000)
 
-  
     # ------------------------------------------------------------------
     # Toolbar actions
     # ------------------------------------------------------------------
+     
+    def _reset_to_defaults(self):
+        """Put every window back to its default values (no file open)."""
+        self.classic_can_settings = dict(DEFAULT_CLASSIC_CAN)
+        self.classic_can_enabled = False
+        self.classic_can_default_settings = dict(DEFAULT_CLASSIC_CAN)
+        self.classic_can_default_all_settings = dict(DEFAULT_CLASSIC_CAN)
+        self.classic_can_all_settings = dict(DEFAULT_CLASSIC_CAN)
+        self.canfd_settings = dict(DEFAULT_CANFD)
+        self.controller.update_logging_config(default_log_config())
+        self.log_pages.apply(default_log_config())
+
+        self.classic_can_page.load_from_parent()
+        self.canfd_page.load_from_parent()
+
+        self.current_file_path = None
+        self._update_title()
+        self._show_device_tree()
+        self.imported_list.clearSelection()
+        self._mark_clean()
 
     def on_new(self):
         if not self._confirm_discard_changes():

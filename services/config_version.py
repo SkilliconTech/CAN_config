@@ -1,5 +1,5 @@
-
-CURRENT_CONFIG_VERSION = 1
+CURRENT_CONFIG_VERSION = 2          # version written by the app
+SUPPORTED_CONFIG_VERSIONS = (1, 2)  # versions the app can read
 
 
 def check_config_version(data):
@@ -19,10 +19,11 @@ def check_config_version(data):
             "Configuration version must be an integer."
         )
 
-    if version != CURRENT_CONFIG_VERSION:
+    if version not in SUPPORTED_CONFIG_VERSIONS:
         raise ValueError(
             f"Unsupported configuration version: {version}. "
-            f"Supported version: {CURRENT_CONFIG_VERSION}."
+            f"Supported versions: "
+            f"{', '.join(str(v) for v in SUPPORTED_CONFIG_VERSIONS)}."
         )
 
     return True

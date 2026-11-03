@@ -2,18 +2,18 @@
     "app": "CAN Configuration Tool",
     "version": 1,
     "classic_can": {
-        "bitrate": "250.000 kbits/s",
+        "bitrate": "1.000 Mbits/s",
         "sampling_point": "75%",
-        "sjw": "3",
+        "sjw": "4",
         "enabled": true
     },
     "canfd": {
         "arbitration_bitrate": "1000 kbits/s",
         "arbitration_sp": "80%",
-        "arbitration_sjw": "5",
-        "data_bitrate": "2000 kbits/s",
+        "arbitration_sjw": "16",
+        "data_bitrate": "8000 kbits/s",
         "data_sp": "80.00%",
-        "data_sjw": "8",
+        "data_sjw": "16",
         "enabled": true
     },
     "filters": {
@@ -28,17 +28,30 @@
                 "ids": [
                     "0x123"
                 ]
+            },
+            {
+                "filter_id": "F2",
+                "enabled": true,
+                "type": "id_list",
+                "extended_id": false,
+                "ids": [
+                    "0x120"
+                ]
             }
         ]
     },
     "triggers": {
         "start": {
-            "type": "power_on"
+            "type": "can_id_match",
+            "can_id": "0x123",
+            "extended_id": true
         },
         "stop": {
-            "type": "none"
+            "type": "can_id_match",
+            "can_id": "0x124",
+            "extended_id": true
         },
-        "rearm_after_stop": false
+        "rearm_after_stop": true
     },
     "logging": {
         "formats": [

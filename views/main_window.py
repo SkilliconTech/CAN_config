@@ -1272,13 +1272,13 @@ class ConfigurationTool(QMainWindow):
             "Tree on the left\n"
             "  Bus Configuration  Classic CAN and CAN FD settings\n"
             "  Log Configuration  Filters, Triggers and Log Files\n"
-            "  JSON Preview  shows the configuration; use "
-            "Generate Config to export it"
+            "  Generate Config  checks the settings and creates "
+            "the configuration file"
         )
         
     def on_export(self):
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export JSON", "config_export.json", JSON_FILTER
+            self, "Generate Config", "config_export.json", JSON_FILTER
         )
         if not path:
             return

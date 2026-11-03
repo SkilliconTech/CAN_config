@@ -264,8 +264,6 @@ class LogConfigWidget(QStackedWidget):
             self.load_triggers()        # show the last applied settings
         if name == "logfiles":
             self.load_logfiles()        # show the last applied settings
-        if name == "preview":
-            self.refresh_preview()
 
     def update_controls(self):
         for selector, field, ext in [
@@ -554,8 +552,7 @@ class LogConfigWidget(QStackedWidget):
         self._saved_logging = copy.deepcopy(log_settings)
 
         self.update_controls()
-        if self.currentIndex() == self.PAGES.index("preview"):
-            self.refresh_preview()
+        
 
     # ---------------- filter table ----------------
     def refresh_table(self):
@@ -694,19 +691,6 @@ class LogConfigWidget(QStackedWidget):
         self.refresh_table()
         self.notify_configuration_changed()
 
-    # ---------------- JSON preview ----------------
-    def _on_generate_clicked(self):
-        # The main window listens to this signal and exports the file
-        self.generate_requested.emit()
-
-    def refresh_preview(self):
-        try:
-            self.preview.setPlainText(json.dumps(self.get_full_config(), indent=2))
-            validate_log_config(self.collect())
-            self.show_status(
-                "Valid configuration; device must verify firmware capabilities.")
-        except ValueError as error:
-            self.show_status(str(error))
 
     # ---------------- theme ----------------
     def set_theme(self, c):

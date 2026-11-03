@@ -1312,8 +1312,8 @@ class ConfigurationTool(QMainWindow):
         log_item.addChild(QTreeWidgetItem(["Log Files"]))
         self.new_tree.addTopLevelItem(log_item)
 
-        # JSON Preview as its own top-level item
-        preview_item = QTreeWidgetItem(["JSON Preview"])
+        # Generate Config: a button-like item, it opens no page
+        preview_item = QTreeWidgetItem(["Generate Config"])
         self.new_tree.addTopLevelItem(preview_item)
 
         bus_item.setExpanded(False)

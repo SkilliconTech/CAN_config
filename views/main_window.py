@@ -1224,18 +1224,34 @@ class ConfigurationTool(QMainWindow):
         if item is None or item is self._pending_new_item:
             return
 
-        # Draft created with New but never saved: just remove the row
+        # Draft created with New but never saved: remove the row
         if item is self._draft_item:
             self._discard_draft()
+            if self.current_file_path is None:
+                self._reset_to_defaults()
+                self.statusBar().showMessage(
+                    "Draft removed. Settings reset to defaults", 3000
+                )
             return
 
         path = item.data(Qt.UserRole)
         name = os.path.basename(path) if path else item.text()
 
+        # Is this the file whose settings are on screen right now?
+        def _same(a, b):
+            return bool(a) and bool(b) and (
+                os.path.normcase(os.path.normpath(a))
+                == os.path.normcase(os.path.normpath(b))
+            )
+        was_open = _same(path, self.current_file_path)
+
         # Ask first
+        text = f"Remove '{name}' from the list?\n\n"
+        if was_open:
+            text += ("The settings on screen will be reset to their "
+                     "default values.\n\n")
         answer = QMessageBox.question(
-            self, "Remove file",
-            f"Remove '{name}' from the list?\n\n",
+            self, "Remove file", text,
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -1249,7 +1265,15 @@ class ConfigurationTool(QMainWindow):
         if path in self.imported_files:
             self.imported_files.remove(path)
 
-        self.statusBar().showMessage(f"Removed from list: {name}", 3000)
+        if was_open:
+            self._reset_to_defaults()
+            self.statusBar().showMessage(
+                f"Removed '{name}'. Settings reset to defaults", 3000
+            )
+        else:
+            self.statusBar().showMessage(
+                f"Removed from list: {name}", 3000
+            )
 
     def _show_save_menu(self):
         # open the dropdown just below the Save button

@@ -59,6 +59,7 @@ from models.config_model import default_log_config
 from services.config_validator import (
     validate_log_config
 )
+from services.config_version import CURRENT_CONFIG_VERSION
 
 from services.config_repository import (
     save_json,
@@ -743,7 +744,7 @@ class ConfigurationTool(QMainWindow):
         # Preserve the existing configuration file format
         data = {
             "app": "CAN Configuration Tool",
-            "version": 1,
+            "version": CURRENT_CONFIG_VERSION,
             "classic_can": dict(self.classic_can_settings),
             "canfd": dict(self.canfd_settings),
         }

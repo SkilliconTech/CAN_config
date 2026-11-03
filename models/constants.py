@@ -28,5 +28,4 @@ LOG_PAGES = {
     "Filters": "filters",
     "Triggers": "triggers",
     "Log Files": "logfiles",
-    "JSON Preview": "preview",
 }

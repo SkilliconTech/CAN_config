@@ -1384,6 +1384,17 @@ class ConfigurationTool(QMainWindow):
 
         name = item.data(0, Qt.UserRole) or item.text(0)
 
+        if name == "Generate Config":
+            if not self._confirm_leave_page():
+                self._reselect_current_page()
+                return
+            self.on_export()
+            # keep the highlight on the page that is still open
+            self._reselect_current_page()
+            if getattr(self, "_current_page", None) is None:
+                self.new_tree.clearSelection()
+            return
+
         # edits on the open page not applied/saved yet?
         if not self._confirm_leave_page():
             self._reselect_current_page()

@@ -1029,8 +1029,15 @@ class ConfigurationTool(QMainWindow):
     # Toolbar actions
     # ------------------------------------------------------------------
      
+    def _clear_page_area(self):
+        """Empty the right-hand side (no page open)."""
+        self._current_page = None
+        self.title_label.setText("Configuration Tool")
+        self._show_lock_switch(None)          # hide Filters/Triggers switches
+        self.content_stack.setVisible(False)  # hide all pages
+
     def _reset_to_defaults(self):
-        """Put every window back to its default values (no file open)."""
+        """Defaults in every window, and an empty page area."""
         self.classic_can_settings = dict(DEFAULT_CLASSIC_CAN)
         self.classic_can_enabled = False
         self.classic_can_default_settings = dict(DEFAULT_CLASSIC_CAN)
@@ -1048,6 +1055,7 @@ class ConfigurationTool(QMainWindow):
         self._show_device_tree()
         self.imported_list.clearSelection()
         self._mark_clean()
+        self._clear_page_area()
 
     def on_new(self):
         if not self._confirm_discard_changes():

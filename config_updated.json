@@ -1,10 +1,10 @@
 {
     "app": "CAN Configuration Tool",
     "version": 2,
-    "classic_can": {
+        "classic_can": {
         "bitrate": "500.000 kbits/s",
-        "sampling_point": "80%",
-        "sjw": "5",
+        "sampling_point": "75%",
+        "sjw": "4",
         "enabled": true
     },
     "canfd": {

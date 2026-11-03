@@ -8,9 +8,13 @@ def test_current_version_is_supported():
     assert check_config_version({"version": 1}) is True
 
 
+def test_version_2_is_supported():
+    assert check_config_version({"version": 2}) is True
+
+
 def test_future_version_is_rejected():
     with pytest.raises(ValueError):
-        check_config_version({"version": 2})
+        check_config_version({"version": 3})
 
 
 def test_missing_version_is_rejected():

@@ -514,8 +514,7 @@ class ConfigurationTool(QMainWindow):
         self.log_pages.configuration_changed.connect(
            self.sync_logging_to_model
         )
-        # "Generate Config" button on the JSON Preview page
-        self.log_pages.generate_requested.connect(self.on_export)
+        
 
         self.classic_can_page = ClassicCANSettingsDialog(self)
         self.canfd_page = CANFDSettingsDialog(self)
